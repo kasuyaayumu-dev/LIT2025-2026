@@ -1,0 +1,194 @@
+/* 
+  Localizable.strings
+  Orilook
+
+  Created by Ayumu on 02.08.25.
+  
+*/
+
+
+//description
+"Back" = "戻る";
+"Forward" = "次へ";
+"opens" = "の展開図";
+
+//Contents list(DataManager)
+"content_list_title" = "作品選択";
+"crane" = "折り鶴";
+"fortune" = "パクパクくん";
+
+//select_mode
+"select_mode" = "使いたいモードを選択して";
+"fold" = "手順";
+"open" = "展開図";
+"3d" = "3D手順";
+"AR" = "AR手順";
+"select_mode_title" = "モード選択";
+
+//main screen
+"Start" = "開始";
+
+//AR mode
+"tap_to_place" = "タップしてモデルを配置";
+
+//settings
+"settings_title" = "設定";
+"lang" = "言語";
+"lang_jp" = "(Ja)日本語";
+"lang_en" = "(En)英語";
+"reset_to_system_lang" = "システム言語に戻す";
+
+//sound settings
+"sound_settings" = "音量・BGM";
+"sound_settings_title" = "音量・BGM設定";
+"volume" = "音量";
+"volume_settings" = "音量コントロール";
+"bgm" = "BGM";
+"bgm_settings" = "BGM設定";
+"bgm_enabled" = "BGMを有効にする";
+"bgm_volume" = "BGM音量";
+"bgm_info" = "アプリ使用中にリラックスできるBGMを再生";
+"bgm_type" = "BGMタイプ";
+"default_bgm" = "デフォルトBGM";
+"custom_bgm" = "カスタム音楽";
+"add_music" = "音楽を追加";
+"custom_bgm_list" = "カスタムBGMリスト";
+"no_custom_bgm" = "カスタムBGMが登録されていません";
+"random_playback" = "ランダム再生";
+"sound_test" = "サウンドテスト";
+"test_sound" = "テスト音を再生";
+"sound_test_desc" = "タップして現在の音量設定をテスト";
+"reset_sound_settings" = "デフォルトに戻す";
+
+//progress
+"progress_reset" = "進捗リセット";
+"progress_reset_desc" = "全ての作品の完成状況、写真、お気に入りをリセット";
+"progress_reset_confirm_title" = "進捗をリセットしますか？";
+"progress_reset_confirm_message" = "全ての作品の完成状況、アップロードした写真、お気に入りが削除されます。この操作は元に戻せません。";
+"reset" = "リセット";
+"cancel" = "キャンセル";
+"back_to_list" = "作品一覧に戻る";
+
+//photo selection
+"pic_select" = "写真を追加";
+"change_photo" = "写真を変更";
+"camera" = "カメラ";
+"photo_library" = "フォトライブラリ";
+"select_source" = "写真の取得方法を選択してください";
+"camera_permission_needed" = "カメラの使用許可が必要です";
+"photo_library_permission_needed" = "写真ライブラリの使用許可が必要です";
+
+//favorites
+"favorites" = "お気に入り";
+"favorites_only" = "お気に入りのみ表示";
+"add_to_favorites" = "お気に入りに追加";
+"remove_from_favorites" = "お気に入りから削除";
+
+//filter
+"filter" = "フィルター";
+"filter_and_sort" = "フィルターとソート";
+"difficulty" = "難易度";
+"genre" = "ジャンル";
+"tutorial" = "チュートリアル";
+"coming_soon" = "近日公開予定";
+"clear_all" = "全てクリア";
+
+//genres
+"genre_traditional" = "伝統的";
+"genre_animals" = "動物";
+"genre_simple" = "簡単";
+"genre_toys" = "おもちゃ";
+"genre_tutorial" = "チュートリアル";
+"genre_basics" = "基本";
+"genre_vehicles" = "乗り物";
+"genre_modern" = "現代的";
+
+//sort
+"sort" = "ソート";
+"sort_category" = "ソート項目";
+"sort_order" = "ソート順序";
+"name_sort" = "名前";
+"difficulty_sort" = "難易度";
+"original_sort" = "元の順序";
+"sort_ascending" = "昇順";
+"sort_descending" = "降順";
+
+//view mode
+"list_view" = "リスト表示";
+"gallery_view" = "ギャラリー表示";
+"gallery_coming_soon_desc" = "グリッド形式で作品を一覧できる機能を開発中です。しばらくお待ちください。";
+
+//gallery
+"gallery_details" = "詳細";
+"gallery_user_photos" = "ユーザーの作品写真";
+"gallery_no_photos" = "まだ写真がアップロードされていません。この作品を作って、あなたの傑作をシェアしましょう！";
+"gallery_select_item" = "作品を選択してください";
+
+//tutorial
+"tutorial_title" = "チュートリアル";
+"tutorial_skip" = "スキップ";
+"tutorial_done" = "完了";
+"tutorial_next" = "次へ";
+"tutorial_welcome_title" = "Orilookへようこそ！";
+"tutorial_welcome_desc" = "ステップバイステップの手順、3Dモデル、AR案内で美しい折り紙を学びましょう。";
+"tutorial_difficulty_title" = "難易度レベル";
+"tutorial_difficulty_desc" = "プロジェクトはチュートリアルから10段階の星で評価されます。レベル1-5は黒い星、上級レベル6-10は紫の星です。";
+"tutorial_filter_title" = "フィルターとソート";
+"tutorial_filter_desc" = "フィルターアイコンを使用して、難易度レベルでプロジェクトを見つけたり、名前や難易度順でソートできます。";
+"tutorial_viewmode_title" = "表示モード";
+"tutorial_viewmode_desc" = "画面下部のメニューを使用してリスト表示とギャラリー表示を切り替えることができます。";
+"tutorial_language_title" = "言語設定";
+"tutorial_language_desc" = "設定でアプリの言語を変更できます。このアプリは日本語と英語に対応しています。";
+
+//interactive tutorial - contents list
+"tutorial_contents_welcome_title" = "Orilookへようこそ！";
+"tutorial_contents_welcome_message" = "この折り紙学習アプリの主要機能を一緒に見ていきましょう。";
+"tutorial_contents_filter_title" = "フィルター・検索";
+"tutorial_contents_filter_message" = "このボタンで難易度やジャンル別にフィルタリングしたり、お気に入りのみ表示できます。";
+"tutorial_contents_settings_title" = "設定";
+"tutorial_contents_settings_message" = "言語設定や進捗のリセットはここからアクセスできます。";
+"tutorial_contents_viewmode_title" = "表示モード";
+"tutorial_contents_viewmode_message" = "これらのボタンでリスト表示とギャラリー表示を切り替えられます。";
+"tutorial_contents_favorites_title" = "お気に入り";
+"tutorial_contents_favorites_message" = "ハートアイコンをタップして作品をお気に入りに追加できます。";
+
+//interactive tutorial - gallery
+"tutorial_gallery_overview_title" = "ギャラリー表示";
+"tutorial_gallery_overview_message" = "ビジュアルなギャラリー形式で折り紙作品を詳細情報と共に閲覧できます。";
+"tutorial_gallery_selection_title" = "作品選択";
+"tutorial_gallery_selection_message" = "任意の折り紙画像をタップすると、サイドパネルに詳細情報が表示されます。";
+"tutorial_gallery_favorites_title" = "お気に入り追加";
+"tutorial_gallery_favorites_message" = "任意の作品のハートアイコンをタップしてお気に入りに追加できます。";
+
+//interactive tutorial - select mode
+"tutorial_select_mode_overview_title" = "学習モード";
+"tutorial_select_mode_overview_message" = "この折り紙作品をどのように学習するか選択してください。";
+"tutorial_select_mode_buttons_title" = "モード選択";
+"tutorial_select_mode_buttons_message" = "ステップバイステップの手順、展開図、3Dモデル、またはAR案内から選択できます。";
+"tutorial_select_mode_toolbar_title" = "クイックアクション";
+"tutorial_select_mode_toolbar_message" = "ツールバーからお気に入り、カメラ、設定に直接アクセスできます。";
+
+//interactive tutorial - settings
+"tutorial_settings_overview_title" = "アプリ設定";
+"tutorial_settings_overview_message" = "これらの設定でOrilookの使用体験をカスタマイズできます。";
+"tutorial_settings_language_title" = "言語";
+"tutorial_settings_language_message" = "アプリの言語を日本語と英語の間で変更できます。";
+"tutorial_settings_sound_title" = "音量・BGM設定";
+"tutorial_settings_sound_message" = "BGMの音量調整やカスタム音楽の追加ができます。デフォルトBGMまたはお好みの音楽でアプリをお楽しみください。";
+"tutorial_settings_reset_title" = "進捗リセット";
+"tutorial_settings_reset_message" = "必要に応じて、すべての完成状況、写真、お気に入りをリセットできます。";
+
+
+//origami instructions (折り紙の手順)
+//crane (鶴) instructions
+"crane1" = "紙を対角線で半分に折り、開きます。";
+"crane2" = "反対側の角を合わせて鶴の体を作ります。";
+
+//fortune teller (パクパクくん) instructions
+"fortune1" = "縦に半分に折って開く";
+"fortune2" = "横に半分に折って開く";
+"fortune3" = "ひっくり返す";
+"fortune4" = "三角になるように半分に折って開く";
+"fortune5" = "三角になるように半分に先ほど折っていない方を折って開く";
+"fortune6" = "4つ角を中心に折る";
+"fortune7" = "ひっくり返す";

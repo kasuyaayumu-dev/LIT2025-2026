@@ -1,0 +1,193 @@
+/* 
+  Localizable.strings
+  Orilook
+
+  Created by Ayumu on 02.08.25.
+  
+*/
+
+//description
+"Back" = "back";
+"Forward" = "next";
+"opens" = "'s net";
+
+//Contents list(DataManager)
+"crane" = "crane";
+"fortune" = "Fortune Teller";
+"content_list_title" = "Select Origami";
+
+//select_mode
+"select_mode" = "Select the mode that you want to use. ";
+"fold" = "step by step instruction";
+"open" = "net";
+"3d" = "3D step by step instruction";
+"AR" = "AR step by step instruction";
+"select_mode_title" = "select mode";
+
+//main screen
+"Start" = "Start";
+
+//AR mode
+"tap_to_place" = "Tap to place model";
+
+//settings
+"settings_title" = "Settings";
+"lang" = "Language";
+"lang_jp" = "(Ja)Japanese";
+"lang_en" = "(En)English";
+"reset_to_system_lang" = "Reset to system language";
+
+//sound settings
+"sound_settings" = "Sound & BGM";
+"sound_settings_title" = "Sound & BGM Settings";
+"volume" = "Volume";
+"volume_settings" = "Volume Control";
+"bgm" = "Background Music";
+"bgm_settings" = "BGM Settings";
+"bgm_enabled" = "Enable Background Music";
+"bgm_volume" = "BGM Volume";
+"bgm_info" = "Relaxing background music while using the app";
+"bgm_type" = "BGM Type";
+"default_bgm" = "Default BGM";
+"custom_bgm" = "Custom Music";
+"add_music" = "Add Music";
+"custom_bgm_list" = "Custom BGM List";
+"no_custom_bgm" = "No custom BGM registered";
+"random_playback" = "Random Playback";
+"sound_test" = "Sound Test";
+"test_sound" = "Play Test Sound";
+"sound_test_desc" = "Tap to test the current volume settings";
+"reset_sound_settings" = "Reset to Default";
+
+//progress
+"progress_reset" = "Reset Progress";
+"progress_reset_desc" = "Reset completion status, photos, and favorites for all origami";
+"progress_reset_confirm_title" = "Reset Progress?";
+"progress_reset_confirm_message" = "All origami completion status, uploaded photos, and favorites will be deleted. This action cannot be undone.";
+"reset" = "Reset";
+"cancel" = "Cancel";
+"back_to_list" = "Back to List";
+
+//photo selection
+"pic_select" = "Add Photo";
+"change_photo" = "Change Photo";
+"camera" = "Camera";
+"photo_library" = "Photo Library";
+"select_source" = "Select photo source";
+"camera_permission_needed" = "Camera permission required";
+"photo_library_permission_needed" = "Photo library permission required";
+
+//favorites
+"favorites" = "Favorites";
+"favorites_only" = "Show favorites only";
+"add_to_favorites" = "Add to Favorites";
+"remove_from_favorites" = "Remove from Favorites";
+
+//filter
+"filter" = "Filter";
+"filter_and_sort" = "Filter & Sort";
+"difficulty" = "Difficulty";
+"genre" = "Genre";
+"tutorial" = "Tutorial";
+"coming_soon" = "Coming Soon";
+"clear_all" = "Clear All";
+
+//genres
+"genre_traditional" = "Traditional";
+"genre_animals" = "Animals";
+"genre_simple" = "Simple";
+"genre_toys" = "Toys";
+"genre_tutorial" = "Tutorial";
+"genre_basics" = "Basics";
+"genre_vehicles" = "Vehicles";
+"genre_modern" = "Modern";
+
+//sort
+"sort" = "Sort";
+"sort_category" = "Sort by";
+"sort_order" = "Sort Order";
+"name_sort" = "Name";
+"difficulty_sort" = "Difficulty";
+"original_sort" = "Original Order";
+"sort_ascending" = "Ascending";
+"sort_descending" = "Descending";
+
+//view mode
+"list_view" = "List View";
+"gallery_view" = "Gallery View";
+"gallery_coming_soon_desc" = "Grid-style gallery view is under development. Please stay tuned!";
+
+//gallery
+"gallery_details" = "Details";
+"gallery_user_photos" = "User Photos";
+"gallery_no_photos" = "No photos uploaded yet. Create this origami and share your masterpiece!";
+"gallery_select_item" = "Select an item";
+
+//tutorial
+"tutorial_title" = "Tutorial";
+"tutorial_skip" = "Skip";
+"tutorial_done" = "Done";
+"tutorial_next" = "Next";
+"tutorial_welcome_title" = "Welcome to Orilook!";
+"tutorial_welcome_desc" = "Learn to fold beautiful origami with step-by-step instructions, 3D models, and AR guidance.";
+"tutorial_difficulty_title" = "Difficulty Levels";
+"tutorial_difficulty_desc" = "Projects are rated from Tutorial to 10-star difficulty. Black stars for levels 1-5, purple stars for advanced levels 6-10.";
+"tutorial_filter_title" = "Filter & Sort";
+"tutorial_filter_desc" = "Use the filter icon to find projects by difficulty level or sort by name and difficulty order.";
+"tutorial_viewmode_title" = "View Modes";
+"tutorial_viewmode_desc" = "Switch between List and Gallery views using the menu at the bottom of the screen.";
+"tutorial_language_title" = "Language Settings";
+"tutorial_language_desc" = "Change the app language in Settings. The app supports both Japanese and English.";
+
+//interactive tutorial - contents list
+"tutorial_contents_welcome_title" = "Welcome to Orilook!";
+"tutorial_contents_welcome_message" = "Let's explore the main features of this origami learning app together.";
+"tutorial_contents_filter_title" = "Filter & Search";
+"tutorial_contents_filter_message" = "Use this button to filter origami by difficulty, genre, or show only your favorites.";
+"tutorial_contents_settings_title" = "Settings";
+"tutorial_contents_settings_message" = "Access language settings and reset your progress from here.";
+"tutorial_contents_viewmode_title" = "View Modes";
+"tutorial_contents_viewmode_message" = "Switch between List and Gallery view modes using these buttons.";
+"tutorial_contents_favorites_title" = "Favorites";
+"tutorial_contents_favorites_message" = "Tap the heart icon to add origami projects to your favorites.";
+
+//interactive tutorial - gallery
+"tutorial_gallery_overview_title" = "Gallery View";
+"tutorial_gallery_overview_message" = "Browse origami projects in a visual gallery format with detailed information.";
+"tutorial_gallery_selection_title" = "Select Projects";
+"tutorial_gallery_selection_message" = "Tap on any origami image to see detailed information in the side panel.";
+"tutorial_gallery_favorites_title" = "Add to Favorites";
+"tutorial_gallery_favorites_message" = "Tap the heart icon on any project to add it to your favorites.";
+
+//interactive tutorial - select mode
+"tutorial_select_mode_overview_title" = "Learning Modes";
+"tutorial_select_mode_overview_message" = "Choose how you want to learn this origami project.";
+"tutorial_select_mode_buttons_title" = "Mode Selection";
+"tutorial_select_mode_buttons_message" = "Select from step-by-step instructions, net diagrams, 3D models, or AR guidance.";
+"tutorial_select_mode_toolbar_title" = "Quick Actions";
+"tutorial_select_mode_toolbar_message" = "Access favorites, camera, and settings directly from the toolbar.";
+
+//interactive tutorial - settings
+"tutorial_settings_overview_title" = "App Settings";
+"tutorial_settings_overview_message" = "Customize your Orilook experience with these settings.";
+"tutorial_settings_language_title" = "Language";
+"tutorial_settings_language_message" = "Change the app language between Japanese and English.";
+"tutorial_settings_sound_title" = "Sound & BGM Settings";
+"tutorial_settings_sound_message" = "Adjust BGM volume and add custom music. Enjoy the app with default BGM or your favorite music.";
+"tutorial_settings_reset_title" = "Reset Progress";
+"tutorial_settings_reset_message" = "Reset all completion status, photos, and favorites if needed.";
+
+
+//origami instructions
+//crane (crane) instructions
+"crane1" = "Fold the paper in half diagonally, then unfold.";
+"crane2" = "Fold the opposite corners together to create the crane's body.";
+
+//fortune teller instructions
+"fortune1" = "Fold the paper in half vertically, then unfold.";
+"fortune2" = "Fold the paper in half horizontally, then unfold.";
+"fortune3" = "Flip the paper over.";
+"fortune4" = "Fold the paper in half diagonally to create a triangle, then unfold.";
+"fortune5" = "Fold the other diagonal to create a triangle, then unfold.";
+"fortune6" = "Fold all four corners to the center point.";
+"fortune7" = "Flip the paper over to complete the fortune teller.";
