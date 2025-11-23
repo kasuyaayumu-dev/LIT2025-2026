@@ -101,64 +101,7 @@ struct FilterMenu: View {
                 // 難易度セクション
                 Section {
                     VStack(spacing: 16) {
-                        // 1行目: 難易度0 と 難易度6
-                        HStack(alignment: .top, spacing: 20) {
-                            // 左側: 難易度0（チュートリアル）
-                            HStack(spacing: 8) {
-                                Button(action: {
-                                    filterManager.toggleDifficulty(0)
-                                }) {
-                                    Image(systemName: filterManager.selectedDifficulties.contains(0) ? "checkmark.square.fill" : "square")
-                                        .foregroundColor(filterManager.selectedDifficulties.contains(0) ? .blue : .gray)
-                                        .font(.system(size: 18))
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                
-                                Text(languageManager.localizedString("tutorial"))
-                                    .font(.caption)
-                                Spacer()
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                filterManager.toggleDifficulty(0)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // 右側: 難易度6
-                            HStack(spacing: 8) {
-                                Button(action: {
-                                    filterManager.toggleDifficulty(6)
-                                }) {
-                                    Image(systemName: filterManager.selectedDifficulties.contains(6) ? "checkmark.square.fill" : "square")
-                                        .foregroundColor(filterManager.selectedDifficulties.contains(6) ? .blue : .gray)
-                                        .font(.system(size: 18))
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack(spacing: 2) {
-                                        ForEach(0..<5, id: \.self) { _ in
-                                            Image(systemName: "star.fill")
-                                                .foregroundColor(.black)
-                                                .font(.system(size: 12))
-                                        }
-                                    }
-                                    HStack(spacing: 2) {
-                                        Image(systemName: "star.fill")
-                                            .foregroundColor(.purple)
-                                            .font(.system(size: 12))
-                                    }
-                                }
-                                Spacer()
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                filterManager.toggleDifficulty(6)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        
-                        // 2-6行目: 難易度1-5 と 難易度7-10, 空
+                        // 1-5行目: 難易度1-5 と 難易度6-10
                         ForEach(1...5, id: \.self) { row in
                             HStack(alignment: .top, spacing: 20) {
                                 // 左側: 難易度1-5
@@ -193,7 +136,7 @@ struct FilterMenu: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 
                                 // 右側: 難易度7-10 または空
-                                let rightDifficulty = row + 6
+                                let rightDifficulty = row + 5
                                 if rightDifficulty <= 10 {
                                     HStack(spacing: 8) {
                                         Button(action: {

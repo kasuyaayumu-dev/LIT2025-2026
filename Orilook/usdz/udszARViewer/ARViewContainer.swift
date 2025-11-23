@@ -134,6 +134,7 @@ struct ARViewContainer: UIViewRepresentable {
                 }
                 
                 if let worldMap = worldMap {
+                    self?.arView?.session.pause()
                     self?.arStateManager?.saveWorldMap(worldMap)
                     print("ワールドマップを保存しました")
                 }
@@ -173,8 +174,9 @@ struct ARViewContainer: UIViewRepresentable {
             if let firstResult = results.first {
                 placeModel(at: firstResult.worldTransform, in: arView)
             } else {
+                print("平面が見つからないよー！")
                 // 平面が見つからない場合は固定位置に配置
-                placeModelAtDefaultPosition(in: arView)
+                // placeModelAtDefaultPosition(in: arView)
             }
         }
         
