@@ -9,6 +9,7 @@ struct description_AR: View {
     // --- Environment / State ---
     @EnvironmentObject var languageManager: LanguageManager
     @EnvironmentObject var navigationManager: NavigationManager
+    @Environment(\.dismiss) private var dismiss // ✅ 標準の戻る処理用
     @State var stepnum = 0 // 現在のステップ番号
     
     @State private var showPermissionAlert = false
@@ -50,90 +51,141 @@ struct description_AR: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Text(origamiItem.name) // 整理したプロパティを使用
-                        .font(.system(size: 32))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    
-                    PersistentARUSDZViewer(
-                        fileName: currentModelName, // 整理したプロパティを使用
-                        width: 550,
-                        height: 600
-                    )
-                    
-                    Text(languageManager.localizedString("tap_to_place"))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    ScrollView {
-                        Text(currentStepText) // 整理したプロパティを使用
-                            .padding()
-                            .multilineTextAlignment(.center)
-                            .font(.system(size: 30))
-                    }
-                    .frame(maxHeight: 80)
-                    
-                    HStack(spacing: 40) {
-                        // 「戻る」ボタン
-                        Button {
-                            if stepnum > 0 {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    stepnum -= 1
-                                }
-                            }
-                        } label: {
-                            Text(languageManager.localizedString("Back"))
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                                .frame(width: 200, height: 100)
-                                .background(stepnum > 0 ? .blue : .gray)
-                                .clipShape(RoundedRectangle(cornerRadius: 22))
-                                .shadow(color: stepnum > 0 ? .cyan : .gray, radius: 15, x: 0, y: 5)
-                        }
-                        .disabled(stepnum <= 0)
-                        
-                        // 「次へ」/「完了」ボタン
-                        Button {
-                            if !isLastStep {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    stepnum += 1
-                                }
-                            } else {
-                                // 最後のステップなら完了画面へ
-                                navigationManager.navigate(to: .done(index: index))
-                            }
-                        } label: {
-                            Text(isLastStep ? languageManager.localizedString("Done") : languageManager.localizedString("Forward"))
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                                .frame(width: 200, height: 100)
-                                .background(isLastStep ? .yellow : .red)
-                                .clipShape(RoundedRectangle(cornerRadius: 22))
-                                .shadow(color: isLastStep ? .gray : .pink, radius: 15, x: 0, y: 5)
+            Text(origamiItem.name)
+                .font(.system(size: 32))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            PersistentARUSDZViewer(
+                fileName: currentModelName,
+                width: 550,
+                height: 600
+            )
+            
+            Text(languageManager.localizedString("tap_to_place"))
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            ScrollView {
+                Text(currentStepText)
+                    .padding()
+                    .multilineTextAlignment(.center)
+                    .font(.system(size: 30))
+            }
+            .frame(maxHeight: 80)
+            
+            HStack(spacing: 40) {
+                // 「戻る」ボタン
+                Button {
+                    if stepnum > 0 {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            stepnum -= 1
                         }
                     }
-                    .padding(.bottom)
+                } label: {
+                    Text(languageManager.localizedString("Back"))
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 100)
+                        .background(stepnum > 0 ? .blue : .gray)
+                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .shadow(color: stepnum > 0 ? .cyan : .gray, radius: 15, x: 0, y: 5)
                 }
-                .onAppear {
-                    requestCameraPermissionIfNeeded()
-                    // `.onChange` があるので、ここで `currentModelName` を設定する必要はなくなります
-                }
-                .onChange(of: stepnum) { _ in
-                    // このViewでは `currentModelName` は `stepnum` から自動計算されるので、
-                    // `.onChange` での同期処理は不要かもしれません。
-                    // もし `PersistentARUSDZViewer` がファイル名変更を検知するために必要なら残します。
-                    print("ステップ変更: \(currentModelName)")
-                }
-                .onDisappear {
-                    print("AR画面を離れます - 状態を保持")
-                }
-                .alert("カメラアクセス", isPresented: $showPermissionAlert) {
-                    Button("設定を開く", action: openSettings)
-                    Button("キャンセル", role: .cancel) { }
-                } message: {
-                    Text("AR機能を使用するにはカメラへのアクセス許可が必要です。")
+                .disabled(stepnum <= 0)
+                
+                // 「次へ」/「完了」ボタン
+                Button {
+                    if !isLastStep {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            stepnum += 1
+                        }
+                    } else {
+                        // ✅ 最後のステップなら完了処理を実行
+                        handleCompletion()
+                    }
+                } label: {
+                    Text(isLastStep ? languageManager.localizedString("Done") : languageManager.localizedString("Forward"))
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 100)
+                        .background(isLastStep ? .yellow : .red)
+                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .shadow(color: isLastStep ? .gray : .pink, radius: 15, x: 0, y: 5)
                 }
             }
+            .padding(.bottom)
+        }
+        .navigationBarBackButtonHidden(true) // ✅ デフォルトの戻るボタンを非表示
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                // ✅ カスタム戻るボタン
+                Button(action: {
+                    handleBackNavigation()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                        Text(languageManager.localizedString("select_mode_title"))
+                            .font(.system(size: 17))
+                    }
+                    .foregroundColor(.blue)
+                }
+            }
+        }
+        .onAppear {
+            requestCameraPermissionIfNeeded()
+            print("AR画面表示: \(currentModelName)")
+        }
+        .onChange(of: stepnum) { oldValue, newValue in
+            print("ステップ変更: \(oldValue) -> \(newValue), モデル: \(currentModelName)")
+        }
+        .onDisappear {
+            print("AR画面を離れます")
+        }
+        .alert("カメラアクセス", isPresented: $showPermissionAlert) {
+            Button("設定を開く", action: openSettings)
+            Button("キャンセル", role: .cancel) { }
+        } message: {
+            Text("AR機能を使用するにはカメラへのアクセス許可が必要です。")
+        }
+    }
+    
+    // ✅ 標準の戻るボタンをタップした時の処理
+    private func handleBackNavigation() {
+        print("戻るボタン: ARデータをクリア")
+        
+        // ARデータをクリア
+        clearARData()
+        
+        // 少し待ってから前の画面に戻る
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            dismiss() // ✅ SwiftUI標準の戻る処理
+        }
+    }
+    
+    // ✅ 完了処理(ARデータをクリアしてから完了画面へ)
+    private func handleCompletion() {
+        print("完了処理: ARデータをクリア")
+        
+        // ARデータをクリア
+        clearARData()
+        
+        // 少し待ってから完了画面へ遷移
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            navigationManager.navigate(to: .done(index: index))
+        }
+    }
+    
+    // ✅ ARデータクリア処理を共通化
+    private func clearARData() {
+        // 1. ARStateManagerの全データをクリア
+        arStateManager.clearAllModelPlacements()
+        
+        // 2. リセットトリガーを発動してCoordinatorにアンカー削除を指示
+        arStateManager.resetTrigger = UUID()
+        
+        print("✅ ARデータクリア完了")
+    }
     
     private func requestCameraPermissionIfNeeded() {
         let status = AVCaptureDevice.authorizationStatus(for: .video)

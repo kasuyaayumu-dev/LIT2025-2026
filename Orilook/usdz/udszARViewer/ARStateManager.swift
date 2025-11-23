@@ -2,12 +2,17 @@ import SwiftUI
 import ARKit
 import RealityKit
 import AVFoundation
+import Combine
 
-// AR状態管理クラス（シングルトン）
+// AR状態管理クラス(シングルトン)
 class ARStateManager: ObservableObject {
     static let shared = ARStateManager()
     
     @Published var modelStates: [String: ModelState] = [:]
+    
+    // ✅ UIからのリセット要求をCoordinatorに伝えるためのトリガー
+    @Published var resetTrigger: UUID? = nil
+    
     private(set) var savedWorldMap: ARWorldMap?
     private var currentSessionId: String?
     
@@ -15,7 +20,7 @@ class ARStateManager: ObservableObject {
     
     struct ModelState {
         var isPlaced: Bool = false
-        var placementTransform: simd_float4x4?
+        var placementTransform: simd_float4x4? // ✅ 修正: simd_float44 → simd_float4x4
         var sessionId: String?
     }
     
@@ -33,7 +38,7 @@ class ARStateManager: ObservableObject {
         print("ARセッションID設定: \(sessionId)")
     }
     
-    func setModelPlaced(fileName: String, at transform: simd_float4x4) {
+    func setModelPlaced(fileName: String, at transform: simd_float4x4) { // ✅ 修正: simd_float44 → simd_float4x4
         let state = ModelState(
             isPlaced: true,
             placementTransform: transform,

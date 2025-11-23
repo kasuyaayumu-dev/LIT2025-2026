@@ -2,38 +2,47 @@ import SwiftUI
 import ARKit
 import RealityKit
 import AVFoundation
+import Combine
 
 // 永続化対応Coordinator
 class PersistentCoordinator: NSObject, ARSessionDelegate {
     var arView: ARView?
-    var fileName: String {
-        didSet {
-            if oldValue != fileName {
-                print("PersistentCoordinator: fileName更新 \(oldValue) -> \(fileName)")
-            }
-        }
-    }
+    var fileName: String
     var currentAnchor: AnchorEntity?
     var currentAnimationController: AnimationPlaybackController?
     var arStateManager: ARStateManager
     private var worldMapSaveTimer: Timer?
     private var lastPlacedModelName: String?
     
+    private var resetCancellable: AnyCancellable?
+    
     init(fileName: String, arStateManager: ARStateManager) {
         self.fileName = fileName
         self.arStateManager = arStateManager
         super.init()
         
-        // 定期的にワールドマップを保存
         startWorldMapSaving()
+        setupResetObserver()
     }
     
     deinit {
         worldMapSaveTimer?.invalidate()
+        resetCancellable?.cancel()
+    }
+    
+    private func setupResetObserver() {
+        resetCancellable = arStateManager.$resetTrigger
+            .compactMap { $0 }
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in // ✅ 修正: @MainActor を削除
+                Task { @MainActor in
+                    print("Coordinator: リセットトリガー受信")
+                    self?.clearAllAnchors()
+                }
+            }
     }
     
     private func startWorldMapSaving() {
-        // 30秒ごとにワールドマップを保存
         worldMapSaveTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             self?.saveCurrentWorldMap()
         }
@@ -41,13 +50,7 @@ class PersistentCoordinator: NSObject, ARSessionDelegate {
     
     private func saveCurrentWorldMap() {
         guard let arView = arView else { return }
-        
         arView.session.getCurrentWorldMap { [weak self] worldMap, error in
-            if let error = error {
-                print("ワールドマップ保存エラー: \(error)")
-                return
-            }
-            
             if let worldMap = worldMap {
                 self?.arStateManager.saveWorldMap(worldMap)
                 print("ワールドマップを保存しました")
@@ -55,180 +58,136 @@ class PersistentCoordinator: NSObject, ARSessionDelegate {
         }
     }
     
+    @MainActor
     @objc func handleTap(_ gesture: UITapGestureRecognizer) {
-        guard let arView = arView else {
-            print("ARView not available")
+        guard let arView = arView else { return }
+        
+        if currentAnchor != nil {
+            print("handleTap: 既にアンカーが配置済みです。")
             return
         }
         
         let location = gesture.location(in: arView)
-        
-        // 既に同じモデルが配置されている場合は何もしない
-        if arStateManager.isModelPlaced(fileName: fileName) {
-            print("同じモデルが既に配置済み: \(fileName)")
-            return
-        }
-        
-        // 保存された配置位置があるかチェック
-        if let savedTransform = arStateManager.getPlacementTransform(fileName: fileName) {
-            print("保存された位置にモデルを復元: \(fileName)")
-            placeModel(at: savedTransform, in: arView)
-            return
-        }
-        
-        // 平面検出を試行
-        let results = arView.raycast(
-            from: location,
-            allowing: .estimatedPlane,
-            alignment: .horizontal
-        )
+        let results = arView.raycast(from: location, allowing: .estimatedPlane, alignment: .horizontal)
         
         if let firstResult = results.first {
-            placeModel(at: firstResult.worldTransform, in: arView)
+            let transform = firstResult.worldTransform
+            
+            print("handleTap: 新しいアンカーを作成・保持します。")
+            let anchor = AnchorEntity(world: transform)
+            arView.scene.addAnchor(anchor)
+            self.currentAnchor = anchor
+            
+            arStateManager.setModelPlaced(fileName: "session_anchor", at: transform)
+            
+            loadModel(named: self.fileName, into: anchor)
+            
         } else {
-            // 平面が見つからない場合は固定位置に配置
-            placeModelAtDefaultPosition(in: arView)
+            print("平面が見つかりませんでした。")
         }
     }
-    
-    func placeModel(at transform: simd_float4x4, in arView: ARView) {
-        // 既存のモデルを削除
+
+    @MainActor
+    func restoreAnchor(at transform: simd_float4x4, in arView: ARView) {
+        if currentAnchor != nil {
+            print("restoreAnchor: 既にアンカーが存在します。")
+            return
+        }
+        
+        print("restoreAnchor: 保存された位置にアンカーを復元します。")
+        let anchor = AnchorEntity(world: transform)
+        arView.scene.addAnchor(anchor)
+        self.currentAnchor = anchor
+        
+        arStateManager.setModelPlaced(fileName: "session_anchor", at: transform)
+        
+        loadModel(named: self.fileName, into: anchor)
+    }
+
+    @MainActor
+    func swapModel(to newFileName: String) {
+        self.fileName = newFileName
+        
+        guard let anchor = self.currentAnchor else {
+            print("swapModel: アンカーがまだ配置されていません。")
+            return
+        }
+        
         removeCurrentModel()
         
-        let cleanFileName = fileName.replacingOccurrences(of: ".usdz", with: "")
-        print("モデル配置試行: \(cleanFileName)")
-        
-        // USDZファイルの確認
-        guard let modelURL = Bundle.main.url(forResource: cleanFileName, withExtension: "usdz") else {
-            print("USDZファイルが見つかりません: \(cleanFileName).usdz")
-            placeFallbackModel(at: transform, in: arView)
-            return
-        }
-        
-        // 非同期でモデル読み込み
-        Task {
-            await loadModel(from: modelURL, at: transform, in: arView)
-        }
-    }
-    
-    private func placeModelAtDefaultPosition(in arView: ARView) {
-        // カメラの前方1メートルに配置
-        guard let frame = arView.session.currentFrame else {
-            print("カメラフレームが取得できません")
-            return
-        }
-        
-        var transform = frame.camera.transform
-        transform.columns.3.z -= 1.0 // 1メートル前方
-        transform.columns.3.y -= 0.3 // 少し下に
-        
-        placeModel(at: transform, in: arView)
+        print("swapModel: \(newFileName) をロードします。")
+        loadModel(named: newFileName, into: anchor)
     }
     
     @MainActor
-    private func loadModel(from url: URL, at transform: simd_float4x4, in arView: ARView) async {
-        do {
-            // モデル読み込み
-            let entity = try await ModelEntity(contentsOf: url)
-            
-            // 安全なスケール設定
-            entity.scale = [0.1, 0.1, 0.1]
-            
-            // アンカー作成
-            let anchor = AnchorEntity(world: transform)
-            anchor.addChild(entity)
-            
-            // シーンに追加
-            arView.scene.addAnchor(anchor)
-            currentAnchor = anchor
-            
-            // 状態を保存（ファイル名ベース）
-            arStateManager.setModelPlaced(fileName: fileName, at: transform)
-            lastPlacedModelName = fileName
-            
-            print("モデルを配置: \(url.lastPathComponent)")
-            print("配置位置を保存: \(fileName) at \(transform.columns.3)")
-            
-            // アニメーションを自動再生
-            playAnimationsIfAvailable(for: entity)
-            
-        } catch {
-            print("モデル読み込みエラー: \(error)")
-            // エラー時はフォールバックモデルを配置
-            placeFallbackModel(at: transform, in: arView)
-        }
-    }
-    
-    private func playAnimationsIfAvailable(for entity: ModelEntity) {
-        // モデルに含まれるアニメーションを検索
-        let animations = entity.availableAnimations
+    private func loadModel(named modelName: String, into anchor: AnchorEntity) {
+        let cleanFileName = modelName.replacingOccurrences(of: ".usdz", with: "")
         
-        if animations.isEmpty {
-            print("アニメーションが見つかりません")
+        guard let modelURL = Bundle.main.url(forResource: cleanFileName, withExtension: "usdz") else {
+            print("USDZファイルが見つかりません: \(cleanFileName).usdz")
+            placeFallbackModel(into: anchor)
             return
         }
         
-        print("利用可能なアニメーション数: \(animations.count)")
-        
-        // 最初のアニメーションを再生（複数ある場合は最初のもの）
-        if let firstAnimation = animations.first {
-            print("アニメーションを再生: \(firstAnimation.name ?? "名前なし")")
-            
-            // アニメーションを無限ループで再生
-            currentAnimationController = entity.playAnimation(
-                firstAnimation.repeat(duration: .infinity),
-                transitionDuration: 0.5,
-                startsPaused: false
-            )
-            
-            // アニメーション速度を調整
-            currentAnimationController?.speed = 1.0
+        Task {
+            do {
+                let entity = try await ModelEntity(contentsOf: modelURL)
+                
+                await MainActor.run {
+                    entity.scale = [0.1, 0.1, 0.1]
+                    anchor.addChild(entity)
+                    print("モデルを配置: \(modelURL.lastPathComponent)")
+                    playAnimationsIfAvailable(for: entity)
+                }
+                
+            } catch {
+                print("モデル読み込みエラー: \(error)")
+                await MainActor.run {
+                    placeFallbackModel(into: anchor)
+                }
+            }
         }
     }
     
-    private func placeFallbackModel(at transform: simd_float4x4, in arView: ARView) {
-        // シンプルなキューブを配置
+    @MainActor
+    private func placeFallbackModel(into anchor: AnchorEntity) {
         let mesh = MeshResource.generateBox(size: 0.1)
         let material = SimpleMaterial(color: .systemBlue, isMetallic: false)
         let entity = ModelEntity(mesh: mesh, materials: [material])
         
-        let anchor = AnchorEntity(world: transform)
         anchor.addChild(entity)
         
-        arView.scene.addAnchor(anchor)
-        currentAnchor = anchor
-        
-        // 状態を保存（ファイル名ベース）
-        arStateManager.setModelPlaced(fileName: fileName, at: transform)
-        lastPlacedModelName = fileName
-        
-        print("フォールバックモデルを配置: \(fileName)")
+        print("フォールバックモデルを配置")
     }
     
+    @MainActor
     func removeCurrentModel() {
-        if let currentAnchor = currentAnchor {
-            // アニメーションを停止
+        if let anchor = currentAnchor {
             stopCurrentAnimations()
-            
-            currentAnchor.removeFromParent()
-            self.currentAnchor = nil
-            print("既存のモデルを削除")
+            anchor.children.removeAll()
+            print("既存のモデル(アンカーの子)を削除")
         }
     }
     
+    @MainActor
     func clearAllAnchors() {
-        removeCurrentModel()
-        arStateManager.clearModelPlacement(fileName: fileName)
+        if let anchor = currentAnchor {
+            stopCurrentAnimations()
+            anchor.removeFromParent()
+            self.currentAnchor = nil
+            print("アンカーをシーンから削除")
+        }
+        
+        arStateManager.clearModelPlacement(fileName: "session_anchor")
         lastPlacedModelName = nil
-        print("全てのアンカーをクリア: \(fileName)")
+        print("全てのアンカーと状態をクリア")
     }
     
+    @MainActor
     private func stopCurrentAnimations() {
-        // 現在のアニメーションコントローラーを停止
         currentAnimationController?.stop()
         currentAnimationController = nil
         
-        // アンカー内の全てのModelEntityのアニメーションを停止
         guard let anchor = currentAnchor else { return }
         
         func stopAnimationsRecursively(_ entity: Entity) {
@@ -244,10 +203,32 @@ class PersistentCoordinator: NSObject, ARSessionDelegate {
         print("アニメーションを停止")
     }
     
+    @MainActor
+    private func playAnimationsIfAvailable(for entity: ModelEntity) {
+        let animations = entity.availableAnimations
+        
+        if animations.isEmpty {
+            print("アニメーションが見つかりません")
+            return
+        }
+        
+        print("利用可能なアニメーション数: \(animations.count)")
+        
+        if let firstAnimation = animations.first {
+            print("アニメーションを再生: \(firstAnimation.name ?? "名前なし")")
+            currentAnimationController = entity.playAnimation(
+                firstAnimation.repeat(duration: .infinity),
+                transitionDuration: 0.5,
+                startsPaused: false
+            )
+            currentAnimationController?.speed = 1.0
+        }
+    }
+    
+    @MainActor
     func restartAnimations() {
         guard let anchor = currentAnchor else { return }
         
-        // ModelEntityを再帰的に検索してアニメーションを再開
         func restartAnimationsRecursively(_ entity: Entity) {
             if let modelEntity = entity as? ModelEntity {
                 playAnimationsIfAvailable(for: modelEntity)
@@ -263,17 +244,13 @@ class PersistentCoordinator: NSObject, ARSessionDelegate {
     
     // MARK: - ARSessionDelegate
     
-    func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        // フレーム更新時の処理（必要に応じて実装）
-    }
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {}
     
     func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
         print("アンカーが追加されました: \(anchors.count)")
     }
     
-    func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
-        // アンカー更新時の処理
-    }
+    func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {}
     
     func session(_ session: ARSession, didRemove anchors: [ARAnchor]) {
         print("アンカーが削除されました: \(anchors.count)")
@@ -285,8 +262,6 @@ class PersistentCoordinator: NSObject, ARSessionDelegate {
     
     func sessionInterruptionEnded(_ session: ARSession) {
         print("ARセッションの中断が終了しました")
-        
-        // セッション再開時に保存されたワールドマップがあれば復元を試行
         if let savedWorldMap = arStateManager.getSavedWorldMap() {
             let config = ARWorldTrackingConfiguration()
             config.planeDetection = [.horizontal]
@@ -310,8 +285,8 @@ struct EnhancedARControlsOverlay: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // 配置状態の表示
-            if arStateManager.isModelPlaced(fileName: fileName) {
+            
+            if arStateManager.isModelPlaced(fileName: "session_anchor") {
                 VStack(spacing: 4) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title2)
@@ -325,7 +300,6 @@ struct EnhancedARControlsOverlay: View {
                 .background(Color.black.opacity(0.7))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             } else {
-                // タップ操作の説明
                 VStack(spacing: 4) {
                     Image(systemName: "hand.tap")
                         .font(.title2)
@@ -340,9 +314,8 @@ struct EnhancedARControlsOverlay: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             
-            // リセットボタン
             Button(action: {
-                arStateManager.clearModelPlacement(fileName: fileName)
+                arStateManager.resetTrigger = UUID()
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "arrow.clockwise")
@@ -361,4 +334,3 @@ struct EnhancedARControlsOverlay: View {
         .padding(8)
     }
 }
-

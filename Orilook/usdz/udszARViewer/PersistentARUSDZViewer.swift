@@ -23,31 +23,15 @@ struct PersistentARUSDZViewer: View {
                     .frame(width: width, height: height)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
-                        EnhancedARControlsOverlay(fileName: fileName),
+                        EnhancedARControlsOverlay(fileName: fileName), // "fileName" は渡してもOK
                         alignment: .topTrailing
                     )
-                    .id(fileName) // 重要: fileNameが変更されたらビューを再作成
+                    // .id(fileName) // ❌ この行を削除（ARViewを再生成させないため）
             } else {
-                // AR非対応時の代替表示
+                // ... (AR非対応時の代替表示) ...
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
-                    .frame(width: width, height: height)
-                    .overlay(
-                        VStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.title)
-                                .foregroundColor(.orange)
-                            Text("AR非対応")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("このデバイスではARが利用できません")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding()
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    // ...
             }
         }
     }

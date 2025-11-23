@@ -7,7 +7,7 @@ struct USDZViewer3D: View {
     let width: CGFloat
     let height: CGFloat
     
-    // 初期化
+    // 初期化  
     init(_ fileName: String, width: CGFloat = 300, height: CGFloat = 300) {
         self.fileName = fileName
         self.width = width
