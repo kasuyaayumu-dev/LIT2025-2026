@@ -120,18 +120,6 @@ struct select_mode: View{
                     }
                 }
                 
-                // 設定ギアアイコン
-                Button(action: {
-                    navigationManager.navigate(to: .settings)
-                }) {
-                    VStack{
-                        Image(systemName: "gearshape.fill")
-                            .resizable()
-                            .frame(width: 40,height: 40)
-                            .foregroundColor(.black)
-                    }
-                }
-                
                 // ヘルプボタン
                 Button(action: {
                     tutorialManager.startTutorial(for: .selectMode, force: true)
@@ -141,6 +129,18 @@ struct select_mode: View{
                             .resizable()
                             .frame(width: 40,height: 40)
                             .foregroundColor(.blue)
+                    }
+                }
+                
+                // 設定ギアアイコン
+                Button(action: {
+                    navigationManager.navigate(to: .settings)
+                }) {
+                    VStack{
+                        Image(systemName: "gearshape.fill")
+                            .resizable()
+                            .frame(width: 40,height: 40)
+                            .foregroundColor(.black)
                     }
                 }
             }

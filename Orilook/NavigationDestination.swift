@@ -8,4 +8,5 @@ enum NavigationDestination: Hashable {
     case descriptionAR(index: Int)
     case done(index: Int)
     case settings
+    case userNew(index: Int)
 }

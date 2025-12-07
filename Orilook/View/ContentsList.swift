@@ -34,6 +34,16 @@ struct ContentsList: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
+                        navigationManager.navigate(to: .userNew(index: 1))
+                    }) {
+                        Image(systemName: "plus.circle")
+                            .resizable()
+                            .frame(width: 40, height: 40)
+                            .foregroundColor(.black)
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
                         tutorialManager.startTutorial(for: .contentsList, force: true)
                     }) {
                         Image(systemName: "questionmark.circle")
@@ -102,6 +112,9 @@ struct ContentsList: View {
                     Done(index: index)
                 case .settings:
                     settings()
+                case .userNew(_):
+                    // 新規作成として遷移（コードは未定）
+                    UserNew(editingOrigamiCode: nil)
                 }
             }
         }

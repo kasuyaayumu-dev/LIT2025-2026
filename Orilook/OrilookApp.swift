@@ -11,6 +11,8 @@ struct OrilookApp: App {
     @StateObject var favoriteManager = FavoriteManager()
     @StateObject var tutorialManager = TutorialManager()
     @StateObject var soundManager = SoundManager()
+    // Add this line
+    @StateObject var userOrigamiManager = UserOrigamiManager()
     
     var body: some Scene {
         WindowGroup {
@@ -24,6 +26,8 @@ struct OrilookApp: App {
                 .environmentObject(favoriteManager)
                 .environmentObject(tutorialManager)
                 .environmentObject(soundManager)
+                // Add this line
+                .environmentObject(userOrigamiManager)
                 .environment(\.locale, languageManager.language.locale)
         }
     }
