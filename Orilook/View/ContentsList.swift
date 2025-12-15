@@ -10,31 +10,35 @@ struct ContentsList: View {
     @EnvironmentObject var favoriteManager: FavoriteManager
     @EnvironmentObject var tutorialManager: TutorialManager
     @EnvironmentObject var soundManager: SoundManager
+    @EnvironmentObject var userOrigamiManager: UserOrigamiManager
+    
     @State private var isTutorialPresented = false
     @State private var showingPhotoPickerSheet = false
     @State private var selectedImage: UIImage?
     @State private var selectedOrigamiCode: String?
     
     var body: some View {
-        let origamiArray = getOrigamiArray(languageManager: languageManager)
+        // 全ての折り紙データを取得（プリセット＋ユーザー作品）
+        let origamiArray = getAllOrigamiArray(languageManager: languageManager, userOrigamiManager: userOrigamiManager)
         let filteredArray = filterManager.filterAndSortOrigami(origamiArray, languageManager: languageManager, favoriteManager: favoriteManager)
+        
         NavigationStack(path: $navigationManager.path) {
             VStack(spacing: 0) {
                 // コンテンツ表示
                 if viewModeManager.selectedViewMode == .list {
-                    listView(filteredArray: filteredArray, origamiArray: origamiArray)
+                    listView(filteredArray: filteredArray)
                 } else {
                     GalleryView(origamiArray: filteredArray)
                 }
                 
-                // 下部メニューバーfolder.badge.questionmark
+                // 下部メニューバー
                 bottomMenuBar()
             }
             .background(Color(.systemBackground))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
-                        navigationManager.navigate(to: .userNew(index: 1))
+                        navigationManager.navigate(to: .userNew(index: 0))
                     }) {
                         Image(systemName: "plus.circle")
                             .resizable()
@@ -63,7 +67,6 @@ struct ContentsList: View {
                                 .frame(width: 40, height: 40)
                                 .foregroundColor(filterManager.hasActiveFilters ? .blue : .black)
                             
-                            // フィルター適用時のインジケーター
                             if filterManager.hasActiveFilters {
                                 Circle()
                                     .fill(.red)
@@ -98,60 +101,53 @@ struct ContentsList: View {
             .background(photoPickerAndOnChange)
             .navigationDestination(for: NavigationDestination.self) { destination in
                 switch destination {
-                case .selectMode(let index):
-                    select_mode(index: index)
-                case .descriptionFold(let index):
-                    description_fold(index: index)
-                case .descriptionOpen(let index):
-                    description_open(index: index)
-                case .descriptionTheed(let index):
-                    description_theed(index: index)
-                case .descriptionAR(let index):
-                    description_AR(index: index)
-                case .done(let index):
-                    Done(index: index)
+                case .selectMode(let origami):
+                    select_mode(origami: origami)
+                case .descriptionFold(let origami):
+                    description_fold(origami: origami)
+                case .descriptionOpen(let origami):
+                    description_open(origami: origami)
+                case .descriptionTheed(let origami):
+                    DescriptionThreed(origami: origami)
+                case .descriptionAR(let origami):
+                    description_AR(origami: origami)
+                case .done(let origami):
+                    Done(origami: origami)
                 case .settings:
                     settings()
                 case .userNew(_):
-                    // 新規作成として遷移（コードは未定）
                     UserNew(editingOrigamiCode: nil)
                 }
             }
         }
         .onAppear {
-            // ContentsList表示時にBGMを開始
             soundManager.startBGMAfterLoading()
         }
         .tutorial(flow: .contentsList, autoStart: true)
     }
     
-    private func listView(filteredArray: [OrigamiController], origamiArray: [OrigamiController]) -> some View {
+    private func listView(filteredArray: [OrigamiController]) -> some View {
         List {
-            ForEach(
-                0..<filteredArray.count,
-                id: \.self
-            ) { index in
+            ForEach(filteredArray) { origami in
                 Button(action: {
-                    //行き先 - 元のindexを渡す必要があるため、filteredArrayから元のindexを取得
-                    let originalIndex = origamiArray.firstIndex { $0.id == filteredArray[index].id } ?? 0
-                    navigationManager.navigate(to: .selectMode(index: originalIndex))
+                    // 【重要】インデックスではなく、データそのものを渡す
+                    navigationManager.navigate(to: .selectMode(origami: origami))
                 }) {
                     HStack(spacing: 40) {
-                        CustomImageView(origamiCode: filteredArray[index].code)
+                        CustomImageView(origamiCode: origami.code)
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 400, height: 300)
                             .clipped()
                         VStack(alignment: .leading, spacing: 20) {
                             HStack {
-                                Text(filteredArray[index].name)
+                                Text(origami.name)
                                     .font(.system(size: 40))
                                     .foregroundStyle(.black)
                                 Spacer()
                                 
-                                // カメラボタン（完成済み作品の場合のみ）
-                                if completionManager.isCompleted(origamiCode: filteredArray[index].code) {
+                                if completionManager.isCompleted(origamiCode: origami.code) {
                                     Button(action: {
-                                        selectedOrigamiCode = filteredArray[index].code
+                                        selectedOrigamiCode = origami.code
                                         showingPhotoPickerSheet = true
                                     }) {
                                         Image(systemName: "camera.fill")
@@ -161,18 +157,16 @@ struct ContentsList: View {
                                     .buttonStyle(PlainButtonStyle())
                                     .padding(.trailing, 8)
                                     
-                                    // 完成バッジ
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(.green)
                                         .font(.title)
                                         .padding(.trailing, 8)
                                 }
                                 
-                                // お気に入りボタン（一番右）
                                 Button(action: {
-                                    favoriteManager.toggleFavorite(origamiCode: filteredArray[index].code)
+                                    favoriteManager.toggleFavorite(origamiCode: origami.code)
                                 }) {
-                                    Image(systemName: favoriteManager.isFavorite(origamiCode: filteredArray[index].code) ? "heart.fill" : "heart")
+                                    Image(systemName: favoriteManager.isFavorite(origamiCode: origami.code) ? "heart.fill" : "heart")
                                         .foregroundColor(.red)
                                         .font(.title2)
                                 }
@@ -180,27 +174,27 @@ struct ContentsList: View {
                                 .tutorialTarget(id: "favorite_button")
                             }
                             HStack {
-                                if filteredArray[index].dif == 0 {
+                                if origami.dif == 0 {
                                     Text(languageManager.localizedString("tutorial"))
                                         .font(.body)
                                         .foregroundColor(.blue)
-                                } else if filteredArray[index].dif <= 5 {
-                                    ForEach((0..<filteredArray[index].dif), id: \.self) { num in
+                                } else if origami.dif <= 5 {
+                                    ForEach(0..<origami.dif, id: \.self) { _ in
                                         Image(systemName: "star.fill")
                                             .resizable()
                                             .aspectRatio(contentMode: .fit)
                                             .frame(width: 40)
                                             .foregroundColor(.black)
                                     }
-                                    ForEach((0..<5-filteredArray[index].dif), id: \.self) { num in
+                                    ForEach(0..<5-origami.dif, id: \.self) { _ in
                                         Image(systemName: "star")
                                             .resizable()
                                             .aspectRatio(contentMode: .fit)
                                             .frame(width: 40)
                                             .foregroundColor(.black)
                                     }
-                                } else{
-                                    ForEach((1...5), id: \.self) { num in
+                                } else {
+                                    ForEach(1...5, id: \.self) { _ in
                                         Image(systemName: "star.fill")
                                             .resizable()
                                             .aspectRatio(contentMode: .fit)
@@ -209,9 +203,9 @@ struct ContentsList: View {
                                     }
                                 }
                             }
-                            if filteredArray[index].dif > 5 {
+                            if origami.dif > 5 {
                                 HStack {
-                                    ForEach((0..<filteredArray[index].dif-5), id: \.self) { num in
+                                    ForEach(0..<origami.dif-5, id: \.self) { _ in
                                         Image(systemName: "star.fill")
                                             .resizable()
                                             .aspectRatio(contentMode: .fit)
@@ -229,7 +223,6 @@ struct ContentsList: View {
     
     private func bottomMenuBar() -> some View {
         HStack(spacing: 0) {
-            // リストビューボタン
             HStack(spacing: 6) {
                 Image(systemName: "list.bullet")
                     .font(.system(size: 16))
@@ -246,12 +239,10 @@ struct ContentsList: View {
                 viewModeManager.setViewMode(.list)
             }
             
-            // 区切り線
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
                 .frame(width: 0.5)
             
-            // ギャラリービューボタン
             HStack(spacing: 6) {
                 Image(systemName: "grid")
                     .font(.system(size: 16))
@@ -280,7 +271,6 @@ struct ContentsList: View {
     }
 }
 
-// ContentsList struct自体の最後に追加
 extension ContentsList {
     private var photoPickerAndOnChange: some View {
         EmptyView()
@@ -297,16 +287,4 @@ extension ContentsList {
                 )
             }
     }
-}
-#Preview {
-    CView()
-        .environmentObject(LanguageManager())
-        .environmentObject(FilterManager())
-        .environmentObject(ViewModeManager())
-        .environmentObject(CompletionManager())
-        .environmentObject(NavigationManager())
-        .environmentObject(ImageManager())
-        .environmentObject(FavoriteManager())
-        .environmentObject(TutorialManager())
-        .environmentObject(SoundManager())
 }

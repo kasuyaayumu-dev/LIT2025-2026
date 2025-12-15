@@ -1,19 +1,19 @@
 import SwiftUI
 
 struct Done: View{
-    let index: Int
     @EnvironmentObject var languageManager: LanguageManager
     @EnvironmentObject var completionManager: CompletionManager
     @EnvironmentObject var navigationManager: NavigationManager
     @EnvironmentObject var imageManager: ImageManager
     @State private var showingPhotoPickerSheet = false
     @State private var selectedImage: UIImage?
+    let origami: OrigamiController
     
     var body: some View {
         VStack(spacing: 30){
-            Text(getOrigamiArray(languageManager: languageManager)[index].name)
+            Text(origami.name)
                 .font(.system(size: 50))
-            CustomImageView(origamiCode: getOrigamiArray(languageManager: languageManager)[index].code)
+            CustomImageView(origamiCode: origami.code)
                 .scaledToFit()
             Text(languageManager.localizedString("congratulations"))
                 .font(.system(size: 40))
@@ -45,12 +45,10 @@ struct Done: View{
             }
         }
         .onAppear {
-            let origami = getOrigamiArray(languageManager: languageManager)[index]
             completionManager.markAsCompleted(origamiCode: origami.code)
         }
         .onChange(of: selectedImage) { image in
             if let image = image {
-                let origami = getOrigamiArray(languageManager: languageManager)[index]
                 imageManager.saveUserImage(image, for: origami.code)
             }
         }

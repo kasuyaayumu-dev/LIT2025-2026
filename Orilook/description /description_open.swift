@@ -1,23 +1,29 @@
 import SwiftUI
 
 struct description_open: View {
-    let index: Int
+    // 【修正】Intではなく、OrigamiControllerを直接受け取る
+    let origami: OrigamiController
+    
     @EnvironmentObject var languageManager: LanguageManager
     @EnvironmentObject var navigationManager: NavigationManager
-    @State var stepnum = 0
+    
     var body: some View {
         VStack{
-            Text(getOrigamiArray(languageManager: languageManager)[index].name)
+            // 【修正】配列インデックスではなく、受け取ったデータ(origami)を使用
+            Text(origami.name)
                 .font(.system(size: 50))
-            Image(getOrigamiArray(languageManager: languageManager)[index].code + "_open")
+            
+            // 【修正】画像ファイル名もコードから生成
+            Image(origami.code + "_open")
                 .resizable()
                 .scaledToFit()
-            Text(getOrigamiArray(languageManager: languageManager)[index].name + languageManager.localizedString("opens"))
+            
+            Text(origami.name + languageManager.localizedString("opens"))
                 .font(.system(size: 40))
+            
             Button {
-
-                    navigationManager.navigate(to: .done(index: index))
-
+                // 【修正】ここがエラーの原因です。indexではなくorigamiを渡します
+                navigationManager.navigate(to: .done(origami: origami))
             } label: {
                 Text( languageManager.localizedString("Done"))
                     .font(.system(size: 20))
@@ -30,8 +36,4 @@ struct description_open: View {
             
         }
     }
-}
-
-#Preview {
-    
 }

@@ -4,54 +4,48 @@ import RealityKit
 import AVFoundation
 
 struct description_AR: View {
-    let index: Int
+    // 【修正】IntではなくOrigamiControllerを受け取る
+    let origami: OrigamiController
     
-    // --- Environment / State ---
     @EnvironmentObject var languageManager: LanguageManager
     @EnvironmentObject var navigationManager: NavigationManager
-    @Environment(\.dismiss) private var dismiss // ✅ 標準の戻る処理用
-    @State var stepnum = 0 // 現在のステップ番号
+    @Environment(\.dismiss) private var dismiss
+    @State var stepnum = 0
     
     @State private var showPermissionAlert = false
     @ObservedObject private var arStateManager = ARStateManager.shared
     
-    // --- 1. コンピューテッドプロパティでデータを整理 ---
-    
-    /// 現在表示している折り紙のデータ
-    private var origamiItem: OrigamiController {
-        getOrigamiArray(languageManager: languageManager)[index]
-    }
-    
-    /// 3Dモデル名の全ステップのリスト (例: ["fortune3d0", "fortune3d1", ...])
     private var modelNameList: [String] {
-        (0..<origamiItem.step).map { stepnum in
-            origamiItem.code + "3d" + String(stepnum)
+        (0..<origami.step).map { stepnum in
+            origami.code + "3d" + String(stepnum)
         }
     }
     
-    /// 現在のステップの3Dモデル名
     private var currentModelName: String {
-        modelNameList[stepnum] // listから現在のステップ番号で取り出す
+        if stepnum < modelNameList.count {
+            return modelNameList[stepnum]
+        }
+        return ""
     }
     
-    /// 現在のステップの解説文
     private var currentStepText: String {
-        origamiItem.text[stepnum]
+        if stepnum < origami.text.count {
+            return origami.text[stepnum]
+        }
+        return ""
     }
     
-    /// ステップの総数
     private var totalSteps: Int {
-        origamiItem.step
+        origami.step
     }
     
-    /// 最後のステップかどうか
     private var isLastStep: Bool {
         stepnum == totalSteps - 1
     }
     
     var body: some View {
         VStack(spacing: 16) {
-            Text(origamiItem.name)
+            Text(origami.name)
                 .font(.system(size: 32))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
@@ -75,7 +69,6 @@ struct description_AR: View {
             .frame(maxHeight: 80)
             
             HStack(spacing: 40) {
-                // 「戻る」ボタン
                 Button {
                     if stepnum > 0 {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -93,14 +86,12 @@ struct description_AR: View {
                 }
                 .disabled(stepnum <= 0)
                 
-                // 「次へ」/「完了」ボタン
                 Button {
                     if !isLastStep {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             stepnum += 1
                         }
                     } else {
-                        // ✅ 最後のステップなら完了処理を実行
                         handleCompletion()
                     }
                 } label: {
@@ -115,10 +106,9 @@ struct description_AR: View {
             }
             .padding(.bottom)
         }
-        .navigationBarBackButtonHidden(true) // ✅ デフォルトの戻るボタンを非表示
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                // ✅ カスタム戻るボタン
                 Button(action: {
                     handleBackNavigation()
                 }) {
@@ -134,13 +124,6 @@ struct description_AR: View {
         }
         .onAppear {
             requestCameraPermissionIfNeeded()
-            print("AR画面表示: \(currentModelName)")
-        }
-        .onChange(of: stepnum) { oldValue, newValue in
-            print("ステップ変更: \(oldValue) -> \(newValue), モデル: \(currentModelName)")
-        }
-        .onDisappear {
-            print("AR画面を離れます")
         }
         .alert("カメラアクセス", isPresented: $showPermissionAlert) {
             Button("設定を開く", action: openSettings)
@@ -150,46 +133,28 @@ struct description_AR: View {
         }
     }
     
-    // ✅ 標準の戻るボタンをタップした時の処理
     private func handleBackNavigation() {
-        print("戻るボタン: ARデータをクリア")
-        
-        // ARデータをクリア
         clearARData()
-        
-        // 少し待ってから前の画面に戻る
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            dismiss() // ✅ SwiftUI標準の戻る処理
+            dismiss()
         }
     }
     
-    // ✅ 完了処理(ARデータをクリアしてから完了画面へ)
     private func handleCompletion() {
-        print("完了処理: ARデータをクリア")
-        
-        // ARデータをクリア
         clearARData()
-        
-        // 少し待ってから完了画面へ遷移
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            navigationManager.navigate(to: .done(index: index))
+            // 【修正】ここがエラーの原因でした。origamiを渡すように修正済み
+            navigationManager.navigate(to: .done(origami: origami))
         }
     }
     
-    // ✅ ARデータクリア処理を共通化
     private func clearARData() {
-        // 1. ARStateManagerの全データをクリア
         arStateManager.clearAllModelPlacements()
-        
-        // 2. リセットトリガーを発動してCoordinatorにアンカー削除を指示
         arStateManager.resetTrigger = UUID()
-        
-        print("✅ ARデータクリア完了")
     }
     
     private func requestCameraPermissionIfNeeded() {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
-        
         switch status {
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { granted in

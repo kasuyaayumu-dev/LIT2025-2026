@@ -24,6 +24,10 @@ struct UserNew: View {
     @State private var has3D = true
     @State private var hasAR = true
     
+    // ✅ 追加: データの初回読み込み完了フラグ
+    // これにより、詳細画面から戻った時にデータがリセットされるのを防ぎます
+    @State private var hasLoadedData = false
+    
     init(editingOrigamiCode: String? = nil) {
         self.editingOrigamiCode = editingOrigamiCode
     }
@@ -258,6 +262,9 @@ struct UserNew: View {
     // MARK: - Functions
     
     private func loadOrigamiData() {
+        // ✅ 修正: 既にデータを読み込み済みの場合は何もしない（画面遷移で戻ってきた時用）
+        if hasLoadedData { return }
+        
         // 既存作品を編集する場合
         if let code = editingOrigamiCode,
            let origami = userOrigamiManager.getOrigami(code: code) {
@@ -285,6 +292,9 @@ struct UserNew: View {
             has3D = true
             hasAR = true
         }
+        
+        // ✅ 修正: 読み込み完了フラグを立てる
+        hasLoadedData = true
     }
     
     private func saveOrigami() {

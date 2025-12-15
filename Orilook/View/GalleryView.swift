@@ -1,18 +1,5 @@
 import SwiftUI
 
-// 表示アイテムの種類
-enum DisplayItemType {
-    case origami(OrigamiController, Int)
-    case detail(OrigamiController)
-    case spacer
-}
-
-// 表示アイテム
-struct DisplayItem: Identifiable {
-    let id = UUID()
-    let type: DisplayItemType
-}
-
 struct GalleryView: View {
     @EnvironmentObject var languageManager: LanguageManager
     @EnvironmentObject var completionManager: CompletionManager
@@ -21,7 +8,6 @@ struct GalleryView: View {
     @EnvironmentObject var favoriteManager: FavoriteManager
     let origamiArray: [OrigamiController]
     @State private var selectedOrigami: OrigamiController?
-    @State private var selectedIndex: Int?
     @State private var showingPhotoPickerSheet = false
     @State private var selectedImage: UIImage?
     
@@ -31,22 +17,21 @@ struct GalleryView: View {
     var body: some View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
-                // 左側：作品グリッド（画面の約2/3を使用）
+                // 左側：作品グリッド
                 let twoColumns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
                 LazyVGrid(columns: twoColumns, spacing: 8) {
-                    ForEach(Array(origamiArray.enumerated()), id: \.offset) { index, origami in
-                        galleryItemView(origami: origami, index: index)
+                    ForEach(origamiArray) { origami in
+                        galleryItemView(origami: origami)
                     }
                 }
                 .padding()
                 .frame(width: geometry.size.width * 0.65)
                 
-                // 右側：選択した作品の詳細（画面の約1/3を使用）
+                // 右側：選択した作品の詳細
                 VStack {
                     if let selectedOrigami = selectedOrigami {
                         selectedDetailView(origami: selectedOrigami)
                     } else {
-                        // 何も選択されていない場合のプレースホルダー
                         VStack {
                             Image(systemName: "photo.on.rectangle")
                                 .font(.system(size: 50))
@@ -78,30 +63,27 @@ struct GalleryView: View {
         }
     }
     
-    private func galleryItemView(origami: OrigamiController, index: Int) -> some View {
-        let isSelected = selectedOrigami?.code == origami.code
+    private func galleryItemView(origami: OrigamiController) -> some View {
+        let isSelected = selectedOrigami?.id == origami.id
         let isCompleted = completionManager.isCompleted(origamiCode: origami.code)
-        let imageSize: CGFloat = 200 // 左側が大きくなったので画像も大きく
+        let imageSize: CGFloat = 200
         
         return VStack(spacing: 6) {
             Button(action: {
-                if selectedOrigami?.code == origami.code {
-                    selectedOrigami = nil // 同じ画像をタップしたら閉じる
-                    selectedIndex = nil
+                if selectedOrigami?.id == origami.id {
+                    selectedOrigami = nil
                 } else {
                     selectedOrigami = origami
-                    selectedIndex = index
                 }
             }) {
                 VStack(spacing: 6) {
                     ZStack {
-                        // 画像（ユーザー画像がある場合はそれを使用、ない場合はモノクロ）
                         CustomImageView(origamiCode: origami.code)
                             .scaledToFit()
                             .aspectRatio(1, contentMode: .fill)
                             .frame(width: imageSize, height: imageSize)
                             .clipped()
-                            .grayscale(imageManager.hasUserImage(for: origami.code) ? 0.0 : 1.0) // ユーザー画像がある場合はカラー、ない場合はモノクロ
+                            .grayscale(imageManager.hasUserImage(for: origami.code) ? 0.0 : 1.0)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected ? 3 : 1)
@@ -109,10 +91,8 @@ struct GalleryView: View {
                             .cornerRadius(12)
                             .animation(.easeInOut(duration: 0.3), value: isSelected)
                         
-                        // お気に入りボタンと完成バッジ
                         VStack {
                             HStack {
-                                // お気に入りボタン（左上）
                                 Button(action: {
                                     favoriteManager.toggleFavorite(origamiCode: origami.code)
                                 }) {
@@ -126,7 +106,6 @@ struct GalleryView: View {
                                 
                                 Spacer()
                                 
-                                // 完成バッジ（右上）
                                 if isCompleted {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(.green)
@@ -139,7 +118,6 @@ struct GalleryView: View {
                         }
                     }
                     
-                    // 名前
                     Text(origami.name)
                         .font(.caption)
                         .fontWeight(.medium)
@@ -154,12 +132,7 @@ struct GalleryView: View {
     }
     
     private func selectedDetailView(origami: OrigamiController) -> some View {
-        // フィルターされた配列から元の配列のインデックスを取得
-        let fullOrigamiArray = getOrigamiArray(languageManager: languageManager)
-        let originalIndex = fullOrigamiArray.firstIndex { $0.code == origami.code } ?? 0
-        
         return VStack(alignment: .center, spacing: 16) {
-            // 選択された作品の大きめ画像
             CustomImageView(origamiCode: origami.code)
                 .scaledToFit()
                 .aspectRatio(1, contentMode: .fill)
@@ -169,7 +142,6 @@ struct GalleryView: View {
                 .cornerRadius(16)
                 .shadow(radius: 6)
             
-            // 作品名
             Text(origami.name)
                 .font(.title)
                 .fontWeight(.bold)
@@ -177,7 +149,6 @@ struct GalleryView: View {
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
             
-            // 難易度表示
             VStack(spacing: 8) {
                 Text(languageManager.localizedString("difficulty"))
                     .font(.headline)
@@ -207,7 +178,6 @@ struct GalleryView: View {
                 }
             }
             
-            // ジャンルタグ
             VStack(spacing: 8) {
                 Text(languageManager.localizedString("genre"))
                     .font(.headline)
@@ -227,15 +197,14 @@ struct GalleryView: View {
                 }
             }
             
-            // お気に入りボタン
             Button(action: {
                 favoriteManager.toggleFavorite(origamiCode: origami.code)
             }) {
                 HStack {
                     Image(systemName: favoriteManager.isFavorite(origamiCode: origami.code) ? "heart.fill" : "heart")
                         .font(.title2)
-                    Text(favoriteManager.isFavorite(origamiCode: origami.code) ? 
-                         languageManager.localizedString("remove_from_favorites") : 
+                    Text(favoriteManager.isFavorite(origamiCode: origami.code) ?
+                         languageManager.localizedString("remove_from_favorites") :
                          languageManager.localizedString("add_to_favorites"))
                         .font(.title3)
                         .fontWeight(.semibold)
@@ -251,7 +220,6 @@ struct GalleryView: View {
             }
             .padding(.bottom, 10)
             
-            // カメラボタン（完成済み作品の場合のみ）
             if completionManager.isCompleted(origamiCode: origami.code) {
                 Button(action: {
                     showingPhotoPickerSheet = true
@@ -277,10 +245,10 @@ struct GalleryView: View {
             
             Spacer()
             
-            // モード選択ボタン（画面サイズ対応の中央寄せ）
             VStack {
                 Button(action: {
-                    navigationManager.navigate(to: .selectMode(index: originalIndex))
+                    // 【重要】OrigamiControllerを直接渡す
+                    navigationManager.navigate(to: .selectMode(origami: origami))
                 }) {
                     HStack {
                         Spacer(minLength: 0)
@@ -303,116 +271,4 @@ struct GalleryView: View {
         }
         .padding(20)
     }
-    
-    private func detailPanel(origami: OrigamiController) -> some View {
-        // フィルターされた配列から元の配列のインデックスを取得
-        let fullOrigamiArray = getOrigamiArray(languageManager: languageManager)
-        let originalIndex = fullOrigamiArray.firstIndex { $0.code == origami.code } ?? 0
-        
-        return VStack(alignment: .leading, spacing: 12) {
-            // ヘッダー
-            HStack {
-                Text(languageManager.localizedString("gallery_details"))
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Button(action: {
-                    selectedOrigami = nil
-                    selectedIndex = nil
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                        .font(.title3)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            
-            // 作品情報
-            VStack(alignment: .leading, spacing: 16) {
-                // 難易度表示
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(languageManager.localizedString("difficulty"))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .fontWeight(.semibold)
-                    
-                    if origami.dif == 0 {
-                        Text(languageManager.localizedString("tutorial"))
-                            .font(.body)
-                            .foregroundColor(.blue)
-                            .fontWeight(.semibold)
-                    } else {
-                        HStack(spacing: 4) {
-                            ForEach(0..<min(origami.dif, 5), id: \.self) { _ in
-                                Image(systemName: "star.fill")
-                                    .foregroundColor(.black)
-                                    .font(.system(size: 18))
-                            }
-                            if origami.dif > 5 {
-                                ForEach(0..<(origami.dif - 5), id: \.self) { _ in
-                                    Image(systemName: "star.fill")
-                                        .foregroundColor(.purple)
-                                        .font(.system(size: 18))
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // ジャンルタグ
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(languageManager.localizedString("genre"))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .fontWeight(.semibold)
-                    
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                        ForEach(origami.tag, id: \.self) { tag in
-                            Text(languageManager.localizedString("genre_\(tag)"))
-                                .font(.caption)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.blue.opacity(0.1))
-                                .foregroundColor(.blue)
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-                
-                // モード選択ボタン（画面サイズ対応の中央寄せ）
-                VStack {
-                    NavigationLink(destination: select_mode(index: originalIndex)) {
-                        HStack {
-                            Spacer(minLength: 0)
-                            Image(systemName: "play.circle.fill")
-                                .font(.title3)
-                            Text(languageManager.localizedString("select_mode"))
-                                .font(.body)
-                                .fontWeight(.semibold)
-                            Spacer(minLength: 0)
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .cornerRadius(10)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 8)
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-        }
-.frame(minHeight: 200, maxHeight: 200)
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(radius: 4)
-    }
-    
 }
