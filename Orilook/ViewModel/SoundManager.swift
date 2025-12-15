@@ -3,14 +3,15 @@ import AVFoundation
 import MediaPlayer
 import UIKit
 
-enum BGMType: String, CaseIterable {
+// 【修正】省略されていたEnum定義を追加
+enum BGMType: String, CaseIterable, Codable {
     case defaultBGM = "default"
     case custom = "custom"
     
     var displayName: String {
         switch self {
-        case .defaultBGM: return "Default BGM"
-        case .custom: return "Custom Music"
+        case .defaultBGM: return "デフォルト"
+        case .custom: return "カスタム"
         }
     }
 }
@@ -38,7 +39,6 @@ class SoundManager: NSObject, ObservableObject {
         didSet {
             saveBGMType()
             if isBGMEnabled {
-                // 即座に新しいBGMタイプに切り替える
                 stopBackgroundMusic()
                 playBackgroundMusic()
             }
@@ -48,8 +48,8 @@ class SoundManager: NSObject, ObservableObject {
     @Published var customBGMUrls: [URL] = [] {
         didSet {
             saveCustomBGMUrls()
+            // 曲リストが変わった時、カスタム選択中なら再生し直す
             if selectedBGMType == .custom && isBGMEnabled {
-                // カスタムBGMリストが変更された場合は即座に新しいリストから再生
                 stopBackgroundMusic()
                 playBackgroundMusic()
             }
@@ -69,19 +69,18 @@ class SoundManager: NSObject, ObservableObject {
     private let bgmTypeKey = "bgmType"
     private let customBGMUrlsKey = "customBGMUrls"
     private let shuffleEnabledKey = "shuffleEnabled"
-    
+
     override init() {
         super.init()
         loadSettings()
         setupAudioSession()
         setupAppLifecycleObservers()
-        // BGMの自動開始を削除（手動開始に変更）
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     func startBGMAfterLoading() {
         if isBGMEnabled {
             playBackgroundMusic()
@@ -100,7 +99,6 @@ class SoundManager: NSObject, ObservableObject {
     func playBackgroundMusic() {
         guard isBGMEnabled else { return }
         
-        // 既に再生中の場合は停止してから新しい曲を再生
         if let player = backgroundMusicPlayer, player.isPlaying {
             player.stop()
         }
@@ -109,14 +107,13 @@ class SoundManager: NSObject, ObservableObject {
         
         switch selectedBGMType {
         case .defaultBGM:
-            // デフォルトBGMを再生（ファイルがない場合は何もしない）
             urlToPlay = Bundle.main.url(forResource: "default_bgm", withExtension: "mp3")
             if urlToPlay == nil {
-                print("Default BGM file not found. Please add 'default_bgm.mp3' to the project.")
+                print("Default BGM file not found.")
                 return
             }
         case .custom:
-            // カスタムBGMを再生
+            // リストが空でも勝手にデフォルトに戻さない
             if !customBGMUrls.isEmpty {
                 if isShuffleEnabled {
                     urlToPlay = customBGMUrls.randomElement()
@@ -124,15 +121,9 @@ class SoundManager: NSObject, ObservableObject {
                     urlToPlay = customBGMUrls[currentBGMIndex % customBGMUrls.count]
                 }
             } else {
-                // カスタムBGMが空の場合はデフォルトに自動切り替え
-                print("No custom BGM available. Switching to default BGM.")
-                selectedBGMType = .defaultBGM
-                saveBGMType()
-                urlToPlay = Bundle.main.url(forResource: "default_bgm", withExtension: "mp3")
-                if urlToPlay == nil {
-                    print("Default BGM file not found. Please add 'default_bgm.mp3' to the project.")
-                    return
-                }
+                print("No custom BGM available yet. Waiting for user input.")
+                stopBackgroundMusic()
+                return
             }
         }
         
@@ -140,7 +131,7 @@ class SoundManager: NSObject, ObservableObject {
         
         do {
             backgroundMusicPlayer = try AVAudioPlayer(contentsOf: url)
-            backgroundMusicPlayer?.numberOfLoops = 0  // 1曲終了後に次の曲へ
+            backgroundMusicPlayer?.numberOfLoops = 0
             backgroundMusicPlayer?.volume = Float(volume)
             backgroundMusicPlayer?.delegate = self
             backgroundMusicPlayer?.play()
@@ -158,35 +149,58 @@ class SoundManager: NSObject, ObservableObject {
         if selectedBGMType == .custom {
             if !customBGMUrls.isEmpty {
                 if isShuffleEnabled {
-                    // ランダムに次の曲を選択
                     currentBGMIndex = Int.random(in: 0..<customBGMUrls.count)
                 } else {
-                    // 順番に次の曲へ
                     currentBGMIndex = (currentBGMIndex + 1) % customBGMUrls.count
                 }
-            } else {
-                // カスタムBGMが空の場合はデフォルトに切り替え
-                selectedBGMType = .defaultBGM
-                saveBGMType()
             }
         }
         playBackgroundMusic()
     }
-    
+
     func addCustomBGM(url: URL) {
-        if !customBGMUrls.contains(url) {
-            customBGMUrls.append(url)
+        let startAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if startAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        do {
+            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let destinationURL = documentsDirectory.appendingPathComponent(url.lastPathComponent)
+            
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
+            }
+            
+            try FileManager.default.copyItem(at: url, to: destinationURL)
+            
+            if !customBGMUrls.contains(destinationURL) {
+                customBGMUrls.append(destinationURL)
+            }
+            print("Successfully added custom BGM: \(destinationURL.lastPathComponent)")
+            
+        } catch {
+            print("Failed to copy custom BGM: \(error)")
         }
     }
     
     func removeCustomBGM(at index: Int) {
         guard index < customBGMUrls.count else { return }
+        
+        let urlToRemove = customBGMUrls[index]
+        do {
+            try FileManager.default.removeItem(at: urlToRemove)
+        } catch {
+            print("Failed to delete file: \(error)")
+        }
+        
         customBGMUrls.remove(at: index)
     }
     
     func playSound(named soundName: String) {
         guard let url = Bundle.main.url(forResource: soundName, withExtension: "mp3") else { return }
-        
         do {
             let player = try AVAudioPlayer(contentsOf: url)
             player.volume = Float(volume)
@@ -222,7 +236,6 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     private func loadSettings() {
-        // 初起動判定用のキー
         let isFirstLaunchKey = "isFirstLaunch"
         let isFirstLaunch = !UserDefaults.standard.bool(forKey: isFirstLaunchKey)
         
@@ -247,12 +260,11 @@ class SoundManager: NSObject, ObservableObject {
             isShuffleEnabled = UserDefaults.standard.bool(forKey: shuffleEnabledKey)
         }
         
-        // 初起動時またはカスタムBGMが選択されているがファイルがない場合はデフォルトに設定
+        // 初起動時やカスタムBGMが空の場合の処理
         if isFirstLaunch || (selectedBGMType == .custom && customBGMUrls.isEmpty) {
             selectedBGMType = .defaultBGM
             saveBGMType()
             
-            // 初起動フラグを設定
             if isFirstLaunch {
                 UserDefaults.standard.set(true, forKey: isFirstLaunchKey)
             }
@@ -267,50 +279,26 @@ class SoundManager: NSObject, ObservableObject {
         isShuffleEnabled = true
     }
     
-    // アプリのライフサイクルイベントを監視
     private func setupAppLifecycleObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appWillTerminate),
-            name: UIApplication.willTerminateNotification,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appDidEnterBackground),
-            name: UIApplication.didEnterBackgroundNotification,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appWillEnterForeground),
-            name: UIApplication.willEnterForegroundNotification,
-            object: nil
-        )
+        NotificationCenter.default.addObserver(self, selector: #selector(appWillTerminate), name: UIApplication.willTerminateNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(appWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     @objc private func appWillTerminate() {
-        print("App will terminate - stopping background music")
         stopBackgroundMusic()
     }
     
     @objc private func appDidEnterBackground() {
-        // バックグラウンドでの音楽継続は許可（ユーザーが望む場合）
-        print("App entered background - music continues if enabled")
     }
     
     @objc private func appWillEnterForeground() {
-        // フォアグラウンド復帰時に必要に応じて再生を再開
-        print("App will enter foreground")
         if isBGMEnabled && backgroundMusicPlayer?.isPlaying == false {
             playBackgroundMusic()
         }
     }
 }
 
-// AVAudioPlayerDelegateを実装して曲終了時に次の曲を再生
 extension SoundManager: AVAudioPlayerDelegate {
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         if flag && isBGMEnabled {

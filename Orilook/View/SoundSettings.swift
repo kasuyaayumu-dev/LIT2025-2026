@@ -11,7 +11,6 @@ struct SoundSettings: View {
             // 音量設定セクション
             Section {
                 VStack(spacing: 20) {
-                    // 音量スライダー
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Image(systemName: "speaker.wave.2.fill")
@@ -26,8 +25,9 @@ struct SoundSettings: View {
                                 .foregroundColor(.blue)
                         }
                         
-                        Slider(value: $soundManager.volume, in: 0...1)
-                        .accentColor(.blue)
+                        // 【修正】型推論エラーを防ぐため 0.0...1.0 と明示
+                        Slider(value: $soundManager.volume, in: 0.0...1.0)
+                            .accentColor(.blue)
                     }
                     .padding(.vertical, 10)
                 }
@@ -38,7 +38,6 @@ struct SoundSettings: View {
             
             // BGM設定セクション
             Section {
-                // BGM ON/OFF
                 HStack {
                     Image(systemName: soundManager.isBGMEnabled ? "music.note.circle.fill" : "music.note.circle")
                         .font(.title2)
@@ -52,7 +51,6 @@ struct SoundSettings: View {
                 .padding(.vertical, 5)
                 
                 if soundManager.isBGMEnabled {
-                    // BGMタイプ選択
                     VStack(alignment: .leading, spacing: 10) {
                         Text("BGMタイプ")
                             .font(.subheadline)
@@ -67,7 +65,6 @@ struct SoundSettings: View {
                     }
                     .padding(.vertical, 5)
                     
-                    // カスタムBGM管理
                     if soundManager.selectedBGMType == .custom {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
@@ -95,10 +92,12 @@ struct SoundSettings: View {
                                             .foregroundColor(.purple)
                                             .frame(width: 16, height: 16)
                                         
-                                        Text(soundManager.customBGMUrls[index].lastPathComponent)
-                                            .font(.caption)
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
+                                        if index < soundManager.customBGMUrls.count {
+                                            Text(soundManager.customBGMUrls[index].lastPathComponent)
+                                                .font(.caption)
+                                                .lineLimit(1)
+                                                .truncationMode(.middle)
+                                        }
                                         
                                         Spacer()
                                         
@@ -113,13 +112,13 @@ struct SoundSettings: View {
                                         }
                                         .buttonStyle(BorderlessButtonStyle())
                                         .contentShape(Circle())
+                                        // hoverEffectはiOS13.4+対応。エラーが出る場合は削除してください
                                         .hoverEffect(.highlight)
                                     }
                                     .padding(.vertical, 4)
                                 }
                             }
                             
-                            // シャッフル設定
                             if !soundManager.customBGMUrls.isEmpty {
                                 HStack {
                                     Image(systemName: "shuffle")
@@ -142,7 +141,6 @@ struct SoundSettings: View {
                     .font(.headline)
             }
             
-            // デフォルトに戻すボタン
             Section {
                 Button(action: {
                     soundManager.resetToDefaults()
@@ -162,6 +160,15 @@ struct SoundSettings: View {
         }
         .navigationTitle(languageManager.localizedString("sound_settings_title"))
         .navigationBarTitleDisplayMode(.inline)
+        .onDisappear {
+            if soundManager.selectedBGMType == .custom && soundManager.customBGMUrls.isEmpty {
+                print("No custom music found on exit. Reverting to default.")
+                soundManager.selectedBGMType = .defaultBGM
+                if soundManager.isBGMEnabled {
+                    soundManager.playBackgroundMusic()
+                }
+            }
+        }
         .fileImporter(
             isPresented: $isShowingMusicPicker,
             allowedContentTypes: [.audio],
@@ -172,10 +179,11 @@ struct SoundSettings: View {
                 for url in urls {
                     soundManager.addCustomBGM(url: url)
                 }
-                // 追加後にカスタムBGMタイプに切り替えて即座に再生
                 if !urls.isEmpty {
                     DispatchQueue.main.async {
-                        soundManager.selectedBGMType = .custom
+                        if soundManager.selectedBGMType != .custom {
+                            soundManager.selectedBGMType = .custom
+                        }
                         if soundManager.isBGMEnabled {
                             soundManager.playBackgroundMusic()
                         }
@@ -186,12 +194,4 @@ struct SoundSettings: View {
             }
         }
     }
-}
-
-#Preview {
-    NavigationStack {
-        SoundSettings()
-    }
-    .environmentObject(LanguageManager())
-    .environmentObject(SoundManager())
 }
