@@ -31,6 +31,16 @@ struct USDZSceneView: UIViewRepresentable {
     func makeUIView(context: Context) -> SCNView {
         let scnView = SCNView()
         scnView.allowsCameraControl = true
+        
+        // カメラ制御のカスタマイズ
+        // バウンディングボックスではなく原点(0,0,0)を中心に回転させる
+        scnView.defaultCameraController.automaticTarget = false
+        scnView.defaultCameraController.target = SCNVector3(0, 0, 0)
+        // ターンテーブルモード（Z軸回転をロックして水平回転しやすくする）
+        scnView.defaultCameraController.interactionMode = .orbitTurntable
+        // 慣性を有効化
+        scnView.defaultCameraController.inertiaEnabled = true
+        
         scnView.backgroundColor = UIColor.systemBackground
         scnView.antialiasingMode = .multisampling2X
         

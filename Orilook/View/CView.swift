@@ -32,5 +32,4 @@ struct CView: View {
         .environmentObject(FavoriteManager())
         .environmentObject(TutorialManager())
         .environmentObject(SoundManager())
-        .environmentObject(UserOrigamiManager())
 }

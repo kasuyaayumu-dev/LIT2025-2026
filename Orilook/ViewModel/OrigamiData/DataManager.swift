@@ -35,21 +35,17 @@ func getOrigamiArray(languageManager: LanguageManager) -> [OrigamiController] {
     ]
 }
 
-// プリセット + ユーザー作品を統合して取得
-func getAllOrigamiArray(languageManager: LanguageManager,
-                        userOrigamiManager: UserOrigamiManager) -> [OrigamiController] {
+// プリセットの折り紙データを取得
+func getAllOrigamiArray(languageManager: LanguageManager) -> [OrigamiController] {
     let presetOrigami = getOrigamiArray(languageManager: languageManager)
-    let userOrigami = userOrigamiManager.userOrigami
     
-    // プリセット作品を先に表示し、その後ユーザー作品を表示
-    return presetOrigami + userOrigami
+    // プリセット作品を表示
+    return presetOrigami
 }
 
-// 指定されたコードの作品を取得（プリセットとユーザー作品から検索）
+// 指定されたコードの作品を取得
 func getOrigami(code: String,
-                languageManager: LanguageManager,
-                userOrigamiManager: UserOrigamiManager) -> OrigamiController? {
-    let allOrigami = getAllOrigamiArray(languageManager: languageManager,
-                                        userOrigamiManager: userOrigamiManager)
+                languageManager: LanguageManager) -> OrigamiController? {
+    let allOrigami = getAllOrigamiArray(languageManager: languageManager)
     return allOrigami.first { $0.code == code }
 }

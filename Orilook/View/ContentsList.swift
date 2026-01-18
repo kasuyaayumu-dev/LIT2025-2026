@@ -10,7 +10,6 @@ struct ContentsList: View {
     @EnvironmentObject var favoriteManager: FavoriteManager
     @EnvironmentObject var tutorialManager: TutorialManager
     @EnvironmentObject var soundManager: SoundManager
-    @EnvironmentObject var userOrigamiManager: UserOrigamiManager
     
     @State private var isTutorialPresented = false
     @State private var showingPhotoPickerSheet = false
@@ -18,8 +17,8 @@ struct ContentsList: View {
     @State private var selectedOrigamiCode: String?
     
     var body: some View {
-        // 全ての折り紙データを取得（プリセット＋ユーザー作品）
-        let origamiArray = getAllOrigamiArray(languageManager: languageManager, userOrigamiManager: userOrigamiManager)
+        // 全ての折り紙データを取得（プリセットのみ）
+        let origamiArray = getAllOrigamiArray(languageManager: languageManager)
         let filteredArray = filterManager.filterAndSortOrigami(origamiArray, languageManager: languageManager, favoriteManager: favoriteManager)
         
         NavigationStack(path: $navigationManager.path) {
@@ -36,16 +35,6 @@ struct ContentsList: View {
             }
             .background(Color(.systemBackground))
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        navigationManager.navigate(to: .userNew(index: 0))
-                    }) {
-                        Image(systemName: "plus.circle")
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundColor(.black)
-                    }
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
                         tutorialManager.startTutorial(for: .contentsList, force: true)
@@ -115,8 +104,6 @@ struct ContentsList: View {
                     Done(origami: origami)
                 case .settings:
                     settings()
-                case .userNew(_):
-                    UserNew(editingOrigamiCode: nil)
                 }
             }
         }

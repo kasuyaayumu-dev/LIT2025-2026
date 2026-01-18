@@ -9,5 +9,4 @@ enum NavigationDestination: Hashable {
     case descriptionAR(origami: OrigamiController)
     case done(origami: OrigamiController)
     case settings
-    case userNew(index: Int) // 新規作成は便宜上indexのままでOK
 }
