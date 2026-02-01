@@ -1,25 +1,26 @@
 import SwiftUI
 
-enum ViewMode: String, CaseIterable {
-    case list = "list"
-    case gallery = "gallery"
-    
-    var iconName: String {
-        switch self {
-        case .list: return "list.bullet"
-        case .gallery: return "grid"
-        }
-    }
-    
-    var displayName: String {
-        switch self {
-        case .list: return "list_view"
-        case .gallery: return "gallery_view"
-        }
-    }
-}
-
 class ViewModeManager: ObservableObject {
+    // エラー修正: Enumをクラス内部に定義します
+    enum ViewMode: String, CaseIterable {
+        case list = "list"
+        case gallery = "gallery"
+        
+        var iconName: String {
+            switch self {
+            case .list: return "list.bullet"
+            case .gallery: return "grid"
+            }
+        }
+        
+        var displayName: String {
+            switch self {
+            case .list: return "list_view"
+            case .gallery: return "gallery_view"
+            }
+        }
+    }
+
     @Published var selectedViewMode: ViewMode = .list
     
     // 表示モードを設定

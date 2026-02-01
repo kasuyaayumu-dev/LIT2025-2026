@@ -21,270 +21,289 @@ struct FilterMenu: View {
         let availableGenres = filterManager.getAvailableGenres(from: origamiArray)
         
         NavigationStack {
-            VStack(spacing: 0) {
-                // タブバーとナビゲーションの間にスペースを追加
-                Spacer()
-                    .frame(height: 8)
+            ZStack {
+                // 背景：生成り色
+                Color.themeWashi.ignoresSafeArea()
                 
-                // タブバー
-                HStack(spacing: 0) {
-                    ForEach(FilterMenuTab.allCases, id: \.self) { tab in
-                        Text(languageManager.localizedString(tab.title))
-                            .font(.headline)
-                            .foregroundColor(selectedTab == tab ? .blue : .gray)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(selectedTab == tab ? Color.blue.opacity(0.1) : Color.clear)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedTab = tab
+                VStack(spacing: 0) {
+                    // カスタムタブバー
+                    HStack(spacing: 0) {
+                        ForEach(FilterMenuTab.allCases, id: \.self) { tab in
+                            Button(action: { selectedTab = tab }) {
+                                VStack(spacing: 8) {
+                                    Text(languageManager.localizedString(tab.title))
+                                        .font(.headline)
+                                        .foregroundColor(selectedTab == tab ? .themeIndigo : .gray)
+                                    
+                                    // 選択中のタブの下線（筆で引いたような線）
+                                    Rectangle()
+                                        .fill(selectedTab == tab ? Color.themeIndigo : Color.clear)
+                                        .frame(height: 3)
+                                        .cornerRadius(1.5)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 16)
+                                .background(Color.themeWashi.opacity(0.95))
                             }
+                        }
                     }
-                }
-                .background(Color.gray.opacity(0.1))
-                
-                // タブコンテンツ
-                if selectedTab == .filter {
-                    filterContent(availableGenres: availableGenres)
-                } else {
-                    sortContent
+                    .background(Color.white.opacity(0.5))
+                    
+                    // コンテンツエリア
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            if selectedTab == .filter {
+                                filterContent(availableGenres: availableGenres)
+                            } else {
+                                sortContent
+                            }
+                        }
+                        .padding(24)
+                    }
                 }
             }
             .navigationTitle(languageManager.localizedString("filter_and_sort"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(languageManager.localizedString("clear_all")) {
+                    Button(action: {
                         filterManager.clearFilters()
                         filterManager.setSortCategory(.original)
+                    }) {
+                        Text(languageManager.localizedString("clear_all"))
+                            .font(.caption)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.themeVermilion.opacity(0.1))
+                            .foregroundColor(.themeVermilion)
+                            .cornerRadius(4)
                     }
-                    .foregroundColor(.red)
                 }
             }
         }
     }
     
+    // MARK: - フィルタ画面
     private func filterContent(availableGenres: [String]) -> some View {
-        List {
-                // お気に入りセクション
-                Section {
-                    HStack(spacing: 8) {
-                        Button(action: {
-                            filterManager.toggleFavoritesOnly()
-                        }) {
-                            Image(systemName: filterManager.showFavoritesOnly ? "checkmark.square.fill" : "square")
-                                .foregroundColor(filterManager.showFavoritesOnly ? .blue : .gray)
-                                .font(.system(size: 18))
-                        }
-                        .buttonStyle(PlainButtonStyle())
+        VStack(spacing: 24) {
+            
+            // お気に入りフィルタ
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: languageManager.localizedString("favorites"))
+                
+                Button(action: { filterManager.toggleFavoritesOnly() }) {
+                    HStack {
+                        // 和風チェックボックス
+                        WashiCheckBox(isSelected: filterManager.showFavoritesOnly)
                         
-                        HStack(spacing: 6) {
-                            Image(systemName: "heart.fill")
-                                .foregroundColor(.red)
-                                .font(.system(size: 16))
-                            
-                            Text(languageManager.localizedString("favorites_only"))
-                                .font(.caption)
-                        }
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.themeVermilion) // 朱色
+                        
+                        Text(languageManager.localizedString("favorites_only"))
+                            .foregroundColor(.themeSumi)
                         
                         Spacer()
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        filterManager.toggleFavoritesOnly()
-                    }
-                    .padding(.vertical, 8)
-                } header: {
-                    Text(languageManager.localizedString("favorites"))
-                        .font(.headline)
+                    .padding(12)
+                    .background(Color.white) // 内側の背景
                 }
-                // 難易度セクション
-                Section {
-                    VStack(spacing: 16) {
-                        // 1-5行目: 難易度1-5 と 難易度6-10
-                        ForEach(1...5, id: \.self) { row in
-                            HStack(alignment: .top, spacing: 20) {
-                                // 左側: 難易度1-5
-                                HStack(spacing: 8) {
-                                    Button(action: {
-                                        filterManager.toggleDifficulty(row)
-                                    }) {
-                                        Image(systemName: filterManager.selectedDifficulties.contains(row) ? "checkmark.square.fill" : "square")
-                                            .foregroundColor(filterManager.selectedDifficulties.contains(row) ? .blue : .gray)
-                                            .font(.system(size: 18))
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    
-                                    HStack(spacing: 2) {
-                                        ForEach(0..<row, id: \.self) { _ in
-                                            Image(systemName: "star.fill")
-                                                .foregroundColor(.black)
-                                                .font(.system(size: 12))
-                                        }
-                                        ForEach(0..<(5-row), id: \.self) { _ in
-                                            Image(systemName: "star")
-                                                .foregroundColor(.gray)
-                                                .font(.system(size: 12))
-                                        }
-                                    }
-                                    Spacer()
-                                }
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    filterManager.toggleDifficulty(row)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                .washiStyle()
+            }
+            
+            // 難易度フィルタ
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: languageManager.localizedString("difficulty"))
+                
+                VStack(spacing: 12) {
+                    // 1-5行目
+                    ForEach(1...5, id: \.self) { row in
+                        HStack(alignment: .top, spacing: 16) {
+                            // 左側: 難易度1-5
+                            difficultyRow(difficulty: row, maxStars: 5)
+                            
+                            // 右側: 難易度6-10 (存在する場合)
+                            let rightDifficulty = row + 5
+                            if rightDifficulty <= 10 {
+                                // 区切り線
+                                Rectangle().fill(Color.gray.opacity(0.2)).frame(width: 1)
                                 
-                                // 右側: 難易度7-10 または空
-                                let rightDifficulty = row + 5
-                                if rightDifficulty <= 10 {
-                                    HStack(spacing: 8) {
-                                        Button(action: {
-                                            filterManager.toggleDifficulty(rightDifficulty)
-                                        }) {
-                                            Image(systemName: filterManager.selectedDifficulties.contains(rightDifficulty) ? "checkmark.square.fill" : "square")
-                                                .foregroundColor(filterManager.selectedDifficulties.contains(rightDifficulty) ? .blue : .gray)
-                                                .font(.system(size: 18))
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
-                                        
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            HStack(spacing: 2) {
-                                                ForEach(0..<5, id: \.self) { _ in
-                                                    Image(systemName: "star.fill")
-                                                        .foregroundColor(.black)
-                                                        .font(.system(size: 12))
-                                                }
-                                            }
-                                            HStack(spacing: 2) {
-                                                ForEach(0..<(rightDifficulty-5), id: \.self) { _ in
-                                                    Image(systemName: "star.fill")
-                                                        .foregroundColor(.purple)
-                                                        .font(.system(size: 12))
-                                                }
-                                            }
-                                        }
-                                        Spacer()
-                                    }
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        filterManager.toggleDifficulty(rightDifficulty)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                } else {
-                                    Spacer()
-                                        .frame(maxWidth: .infinity)
-                                }
+                                difficultyRow(difficulty: rightDifficulty, maxStars: 5)
+                            } else {
+                                Spacer().frame(maxWidth: .infinity)
                             }
                         }
                     }
-                    .padding(.vertical, 8)
-                } header: {
-                    Text(languageManager.localizedString("difficulty"))
-                        .font(.headline)
                 }
+                .padding(16)
+                .washiStyle()
+            }
+            
+            // ジャンルフィルタ
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: languageManager.localizedString("genre"))
                 
-                // ジャンルセクション
-                Section {
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 12) {
-                        ForEach(availableGenres, id: \.self) { genre in
-                            HStack(spacing: 8) {
-                                Button(action: {
-                                    filterManager.toggleGenre(genre)
-                                }) {
-                                    Image(systemName: filterManager.selectedGenres.contains(genre) ? "checkmark.square.fill" : "square")
-                                        .foregroundColor(filterManager.selectedGenres.contains(genre) ? .blue : .gray)
-                                        .font(.system(size: 18))
-                                }
-                                .buttonStyle(PlainButtonStyle())
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    ForEach(availableGenres, id: \.self) { genre in
+                        Button(action: { filterManager.toggleGenre(genre) }) {
+                            HStack {
+                                WashiCheckBox(isSelected: filterManager.selectedGenres.contains(genre))
                                 
                                 Text(languageManager.localizedString("genre_\(genre)"))
                                     .font(.caption)
-                                    .multilineTextAlignment(.leading)
+                                    .foregroundColor(.themeSumi)
+                                    .lineLimit(1)
                                 
                                 Spacer()
                             }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                filterManager.toggleGenre(genre)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(10)
+                            .background(Color.white)
+                            .cornerRadius(4)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.2), lineWidth: 1))
                         }
                     }
-                    .padding(.vertical, 8)
-                } header: {
-                    Text(languageManager.localizedString("genre"))
-                        .font(.headline)
                 }
             }
         }
+    }
     
+    // 難易度の行コンポーネント
+    private func difficultyRow(difficulty: Int, maxStars: Int) -> some View {
+        Button(action: { filterManager.toggleDifficulty(difficulty) }) {
+            HStack(spacing: 8) {
+                WashiCheckBox(isSelected: filterManager.selectedDifficulties.contains(difficulty))
+                
+                // 星表示
+                HStack(spacing: 1) {
+                    // 通常の星（5以下）
+                    if difficulty <= 5 {
+                        ForEach(0..<difficulty, id: \.self) { _ in
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.themeIndigo)
+                        }
+                        ForEach(0..<(5-difficulty), id: \.self) { _ in
+                            Image(systemName: "star")
+                                .font(.system(size: 10))
+                                .foregroundColor(.gray.opacity(0.4))
+                        }
+                    } else {
+                        // 高難易度（朱色や紫で表現）
+                        ForEach(0..<5, id: \.self) { _ in
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.themeIndigo)
+                        }
+                        ForEach(0..<(difficulty-5), id: \.self) { _ in
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.themeVermilion) // 朱色
+                        }
+                    }
+                }
+                Spacer()
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    // MARK: - ソート画面
     private var sortContent: some View {
-        List {
-            // ソート項目セクション
-            Section {
-                ForEach(SortCategory.allCases, id: \.self) { category in
-                    HStack {
-                        Button(action: {
-                            filterManager.setSortCategory(category)
-                        }) {
+        VStack(spacing: 24) {
+            // ソート項目
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: languageManager.localizedString("sort_category"))
+                
+                VStack(spacing: 0) {
+                    ForEach(SortCategory.allCases, id: \.self) { category in
+                        Button(action: { filterManager.setSortCategory(category) }) {
                             HStack {
-                                Image(systemName: filterManager.selectedSortCategory == category ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(filterManager.selectedSortCategory == category ? .blue : .gray)
-                                    .font(.system(size: 20))
+                                WashiRadioButton(isSelected: filterManager.selectedSortCategory == category)
                                 
                                 Text(languageManager.localizedString(category.displayName))
-                                    .font(.body)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.themeSumi)
                                 
                                 Spacer()
                             }
+                            .padding(16)
+                            .background(Color.white)
                         }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        filterManager.setSortCategory(category)
+                        
+                        if category != SortCategory.allCases.last {
+                            Divider().padding(.leading, 40)
+                        }
                     }
                 }
-            } header: {
-                Text(languageManager.localizedString("sort_category"))
-                    .font(.headline)
+                .washiStyle()
             }
             
-            // ソート順序セクション（元の順序以外の場合のみ表示）
+            // ソート順序（オリジナル以外の場合）
             if filterManager.selectedSortCategory != .original {
-                Section {
-                    ForEach(SortOrder.allCases, id: \.self) { order in
-                        HStack {
-                            Button(action: {
-                                filterManager.setSortOrder(order)
-                            }) {
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader(title: languageManager.localizedString("sort_order"))
+                    
+                    VStack(spacing: 0) {
+                        ForEach(SortOrder.allCases, id: \.self) { order in
+                            Button(action: { filterManager.setSortOrder(order) }) {
                                 HStack {
-                                    Image(systemName: filterManager.selectedSortOrder == order ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(filterManager.selectedSortOrder == order ? .blue : .gray)
-                                        .font(.system(size: 20))
+                                    WashiRadioButton(isSelected: filterManager.selectedSortOrder == order)
                                     
                                     Text(languageManager.localizedString(order.displayName))
-                                        .font(.body)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.themeSumi)
                                     
                                     Spacer()
                                 }
+                                .padding(16)
+                                .background(Color.white)
                             }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            filterManager.setSortOrder(order)
+                            
+                            if order != SortOrder.allCases.last {
+                                Divider().padding(.leading, 40)
+                            }
                         }
                     }
-                } header: {
-                    Text(languageManager.localizedString("sort_order"))
-                        .font(.headline)
+                    .washiStyle()
+                }
+            }
+        }
+    }
+    
+    // MARK: - カスタムUIパーツ
+    
+    // 和風チェックボックス（正方形）
+    struct WashiCheckBox: View {
+        let isSelected: Bool
+        
+        var body: some View {
+            ZStack {
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(isSelected ? Color.themeIndigo : Color.gray.opacity(0.4), lineWidth: 1.5)
+                    .frame(width: 20, height: 20)
+                    .background(isSelected ? Color.themeIndigo.opacity(0.1) : Color.clear)
+                
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.themeIndigo)
+                }
+            }
+        }
+    }
+    
+    // 和風ラジオボタン（円形・朱色の印）
+    struct WashiRadioButton: View {
+        let isSelected: Bool
+        
+        var body: some View {
+            ZStack {
+                Circle()
+                    .stroke(isSelected ? Color.themeVermilion : Color.gray.opacity(0.4), lineWidth: 1.5)
+                    .frame(width: 20, height: 20)
+                
+                if isSelected {
+                    // 選択中は朱色の塗りつぶし（印鑑風）
+                    Circle()
+                        .fill(Color.themeVermilion)
+                        .frame(width: 12, height: 12)
                 }
             }
         }

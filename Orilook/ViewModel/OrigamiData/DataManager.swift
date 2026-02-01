@@ -7,7 +7,7 @@ func getOrigamiArray(languageManager: LanguageManager) -> [OrigamiController] {
             code: "crane",
             name: languageManager.localizedString("crane"),
             step: 2,
-            dif: 2,
+            dif: 3,
             text: [
                 languageManager.localizedString("crane1"),
                 languageManager.localizedString("crane2")
@@ -19,7 +19,7 @@ func getOrigamiArray(languageManager: LanguageManager) -> [OrigamiController] {
             code: "fortune",
             name: languageManager.localizedString("fortune"),
             step: 7,
-            dif: 1,
+            dif: 2,
             text: [
                 languageManager.localizedString("fortune1"),
                 languageManager.localizedString("fortune2"),
@@ -30,6 +30,20 @@ func getOrigamiArray(languageManager: LanguageManager) -> [OrigamiController] {
                 languageManager.localizedString("fortune7")
             ],
             tag: ["traditional", "toys", "simple"],
+            fold: true, open: true, threed: true, AR: true
+        ),
+        OrigamiController(
+            code: "dog",
+            name: languageManager.localizedString("dog"),
+            step: 4,
+            dif: 1,
+            text: [
+                languageManager.localizedString("dog1"),
+                languageManager.localizedString("dog2"),
+                languageManager.localizedString("dog3"),
+                languageManager.localizedString("dog4"),
+            ],
+            tag: ["animals", "simple"],
             fold: true, open: true, threed: true, AR: true
         ),
     ]

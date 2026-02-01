@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct select_mode: View {
-    // 【重要】ここが 'let index: Int' ではなく、下記になっているか確認してください
     let origami: OrigamiController
     
     @EnvironmentObject var languageManager: LanguageManager
@@ -14,143 +13,142 @@ struct select_mode: View {
     @State private var selectedImage: UIImage?
     
     var body: some View {
-        VStack {
-            // 配列[index]ではなく、origamiを直接使用します
-            Text(origami.name)
-                .font(.system(size: 50))
-            CustomImageView(origamiCode: origami.code)
-                .scaledToFit()
-            Text(languageManager.localizedString("select_mode"))
-                .font(.system(size: 40))
+        ZStack {
+            // 背景色
+            Color.themeWashi.ignoresSafeArea()
             
-            // 画面サイズ対応のモード選択ボタン
-            GeometryReader { geometry in
-                let buttonWidth = min(300, (geometry.size.width - 120) / 2)
-                let spacing: CGFloat = 40
+            VStack(spacing: 20) {
+                // タイトル
+                Text(origami.name)
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundColor(.themeSumi)
+                    .multilineTextAlignment(.center)
+                    .padding(.top)
                 
-                VStack(spacing: spacing) {
-                    HStack(spacing: spacing) {
-                        if origami.fold {
-                            Button(action: {
-                                // データそのものを渡す
-                                navigationManager.navigate(to: .descriptionFold(origami: origami))
-                            }) {
-                                Text(languageManager.localizedString("fold"))
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.white)
-                                    .frame(width: buttonWidth, height: 150)
-                                    .background(.blue)
-                                    .clipShape(.capsule)
-                                    .shadow(color: Color.cyan, radius: 15, x: 0, y: 5)
-                            }
-                        }
-                        
-                        if origami.open {
-                            Button(action: {
-                                navigationManager.navigate(to: .descriptionOpen(origami: origami))
-                            }) {
-                                Text(languageManager.localizedString("open"))
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.white)
-                                    .frame(width: buttonWidth, height: 150)
-                                    .background(.blue)
-                                    .clipShape(.capsule)
-                                    .shadow(color: Color.cyan, radius: 15, x: 0, y: 5)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
+                // 画像（額装風 + カメラボタン）
+                ZStack(alignment: .bottomTrailing) {
+                    CustomImageView(origamiCode: origami.code)
+                        .scaledToFit()
+                        .frame(maxWidth: 280)
+                        .padding(12)
+                        .background(Color.white)
+                        .shadow(color: Color.black.opacity(0.15), radius: 5, x: 2, y: 4)
                     
-                    HStack(spacing: spacing) {
-                        if origami.threed {
-                            Button(action: {
-                                navigationManager.navigate(to: .descriptionTheed(origami: origami))
-                            }) {
-                                Text(languageManager.localizedString("3d"))
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.white)
-                                    .frame(width: buttonWidth, height: 150)
-                                    .background(.blue)
-                                    .clipShape(.capsule)
-                                    .shadow(color: Color.cyan, radius: 15, x: 0, y: 5)
-                            }
-                        }
-                        
-                        if origami.AR {
-                            Button(action: {
-                                navigationManager.navigate(to: .descriptionAR(origami: origami))
-                            }) {
-                                Text(languageManager.localizedString("AR"))
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.white)
-                                    .frame(width: buttonWidth, height: 150)
-                                    .background(.blue)
-                                    .clipShape(.capsule)
-                                    .shadow(color: Color.cyan, radius: 15, x: 0, y: 5)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            }
-            .frame(height: 340)
-            .tutorialTarget(id: "mode_buttons")
-            .navigationTitle(languageManager.localizedString("select_mode_title"))
-        }
-        .toolbar {
-            HStack {
-                // お気に入りボタン
-                Button(action: {
-                    favoriteManager.toggleFavorite(origamiCode: origami.code)
-                }) {
-                    VStack{
-                        Image(systemName: favoriteManager.isFavorite(origamiCode: origami.code) ? "heart.fill" : "heart")
-                            .resizable()
-                            .frame(width: 40,height: 40)
-                            .foregroundColor(.red)
-                    }
-                }
-                
-                // カメラアイコン
-                if completionManager.isCompleted(origamiCode: origami.code) {
-                    Button(action: {
-                        showingPhotoPickerSheet = true
-                    }) {
-                        VStack{
+                    // 完了済みの場合、画像右下にカメラボタンを表示
+                    if completionManager.isCompleted(origamiCode: origami.code) {
+                        Button(action: { showingPhotoPickerSheet = true }) {
                             Image(systemName: "camera.fill")
-                                .resizable()
-                                .frame(width: 40,height: 40)
-                                .foregroundColor(.blue)
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .padding(10)
+                                .background(Color.themeIndigo)
+                                .clipShape(Circle())
+                                .shadow(radius: 3)
                         }
+                        .offset(x: 10, y: 10) // 少しはみ出させる
                     }
                 }
                 
-                // 設定ボタン
-                Button(action: {
-                    navigationManager.navigate(to: .settings)
-                }) {
-                    VStack{
-                        Image(systemName: "gearshape.fill")
-                            .resizable()
-                            .frame(width: 40,height: 40)
-                            .foregroundColor(.black)
-                    }
-                }
+                // サブタイトル
+                Text(languageManager.localizedString("select_mode"))
+                    .font(.title2)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
                 
-                // ヘルプボタン
-                Button(action: {
-                    tutorialManager.startTutorial(for: .selectMode, force: true)
-                }) {
-                    VStack{
-                        Image(systemName: "questionmark.circle")
-                            .resizable()
-                            .frame(width: 40,height: 40)
-                            .foregroundColor(.blue)
+                // ボタンレイアウト
+                GeometryReader { geometry in
+                    let buttonWidth = min(300, (geometry.size.width - 120) / 2)
+                    let buttonHeight: CGFloat = 170
+                    let spacing: CGFloat = 30
+                    
+                    VStack(spacing: spacing) {
+                        HStack(spacing: spacing) {
+                            if origami.fold {
+                                ModeCardButton(
+                                    title: languageManager.localizedString("fold"),
+                                    icon: "doc.plaintext.fill",
+                                    color: .themeIndigo,
+                                    width: buttonWidth,
+                                    height: buttonHeight,
+                                    action: { navigationManager.navigate(to: .descriptionFold(origami: origami)) }
+                                )
+                            }
+                            
+                            if origami.open {
+                                ModeCardButton(
+                                    title: languageManager.localizedString("open"),
+                                    icon: "map.fill",
+                                    color: .themeVermilion,
+                                    width: buttonWidth,
+                                    height: buttonHeight,
+                                    action: { navigationManager.navigate(to: .descriptionOpen(origami: origami)) }
+                                )
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        
+                        HStack(spacing: spacing) {
+                            if origami.threed {
+                                ModeCardButton(
+                                    title: languageManager.localizedString("3d"),
+                                    icon: "cube.transparent.fill",
+                                    color: .themeIndigo,
+                                    width: buttonWidth,
+                                    height: buttonHeight,
+                                    action: { navigationManager.navigate(to: .descriptionTheed(origami: origami)) }
+                                )
+                            }
+                            
+                            if origami.AR {
+                                ModeCardButton(
+                                    title: languageManager.localizedString("AR"),
+                                    icon: "camera.viewfinder",
+                                    color: .themeVermilion,
+                                    width: buttonWidth,
+                                    height: buttonHeight,
+                                    action: { navigationManager.navigate(to: .descriptionAR(origami: origami)) }
+                                )
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                }
+                .frame(height: 380)
+                .tutorialTarget(id: "mode_buttons")
+            }
+            .padding(.bottom, 20)
+        }
+        .navigationTitle(languageManager.localizedString("select_mode_title"))
+        // ツールバー設定：ContentsListに合わせて個別のItemで配置
+        .toolbar {
+            // 左：お気に入り
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: { favoriteManager.toggleFavorite(origamiCode: origami.code) }) {
+                    Image(systemName: favoriteManager.isFavorite(origamiCode: origami.code) ? "heart.fill" : "heart")
+                        .resizable().frame(width: 30, height: 30) // サイズ統一
+                        .foregroundColor(favoriteManager.isFavorite(origamiCode: origami.code) ? .themeVermilion : .themeSumi)
+                }
+                .tutorialTarget(id: "favorite_button")
+            }
+            
+            // 中：ヘルプ
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: { tutorialManager.startTutorial(for: .selectMode, force: true) }) {
+                    Image(systemName: "questionmark.circle")
+                        .resizable().frame(width: 30, height: 30)
+                        .foregroundColor(.themeIndigo)
                 }
             }
-            .tutorialTarget(id: "toolbar_buttons")
+            
+            // 右：設定
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: { navigationManager.navigate(to: .settings) }) {
+                    Image(systemName: "gearshape.fill")
+                        .resizable().frame(width: 30, height: 30)
+                        .foregroundColor(.themeSumi)
+                }
+            }
         }
         .onChange(of: selectedImage) { image in
             if let image = image {
@@ -164,5 +162,32 @@ struct select_mode: View {
             )
         }
         .tutorial(flow: .selectMode, autoStart: true)
+    }
+    
+    // MARK: - 和風カード型ボタンコンポーネント
+    private func ModeCardButton(title: String, icon: String, color: Color, width: CGFloat, height: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.1))
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 24))
+                        .foregroundColor(color)
+                }
+                
+                Text(title)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(.themeSumi)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(width: width, height: height)
+            .background(Color.white)
+            .washiStyle()
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }

@@ -10,61 +10,59 @@ struct settings: View {
     @State private var showResetAlert = false
     
     var body: some View {
-        List {
-                // 言語設定
-                NavigationLink(destination: LangSet()) {
-                    HStack {
-                        Image(systemName: "globe")
-                            .resizable()
-                            .frame(width: 20, height: 20)
-                        Text(languageManager.localizedString("lang"))
+        ZStack {
+            // 背景：生成り色
+            Color.themeWashi.ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    // 言語設定
+                    NavigationLink(destination: LangSet()) {
+                        WashiSettingsRow(
+                            icon: "globe",
+                            title: languageManager.localizedString("lang"),
+                            color: .themeIndigo
+                        )
                     }
-                }
-                .tutorialTarget(id: "language_setting")
-                
-                // 音量とBGM設定
-                NavigationLink(destination: SoundSettings()) {
-                    HStack {
-                        Image(systemName: "speaker.wave.2")
-                            .resizable()
-                            .frame(width: 20, height: 20)
-                            .foregroundColor(.blue)
-                        Text(languageManager.localizedString("sound_settings"))
+                    .tutorialTarget(id: "language_setting")
+                    
+                    // 音量とBGM設定
+                    NavigationLink(destination: SoundSettings()) {
+                        WashiSettingsRow(
+                            icon: "speaker.wave.2",
+                            title: languageManager.localizedString("sound_settings"),
+                            color: .themeIndigo
+                        )
                     }
-                }
-                .tutorialTarget(id: "sound_settings")
-                
-                // 進捗リセット
-                Button(action: {
-                    showResetAlert = true
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.clockwise.circle")
-                            .resizable()
-                            .frame(width: 20, height: 20)
-                            .foregroundColor(.red)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(languageManager.localizedString("progress_reset"))
-                                .foregroundColor(.primary)
-                            Text(languageManager.localizedString("progress_reset_desc"))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    .tutorialTarget(id: "sound_settings")
+                    
+                    // 進捗リセット（少し間を空けて配置）
+                    Button(action: {
+                        showResetAlert = true
+                    }) {
+                        WashiSettingsRow(
+                            icon: "arrow.clockwise.circle",
+                            title: languageManager.localizedString("progress_reset"),
+                            subtitle: languageManager.localizedString("progress_reset_desc"),
+                            color: .themeVermilion // 朱色で警告感
+                        )
+                    }
+                    .padding(.top, 10)
+                    .tutorialTarget(id: "progress_reset")
+                    .alert(languageManager.localizedString("progress_reset_confirm_title"), isPresented: $showResetAlert) {
+                        Button(languageManager.localizedString("cancel"), role: .cancel) {}
+                        Button(languageManager.localizedString("reset"), role: .destructive) {
+                            completionManager.resetAll()
+                            imageManager.removeAllUserImages()
+                            favoriteManager.resetAll()
                         }
-                        Spacer()
+                    } message: {
+                        Text(languageManager.localizedString("progress_reset_confirm_message"))
                     }
                 }
-                .tutorialTarget(id: "progress_reset")
-                .alert(languageManager.localizedString("progress_reset_confirm_title"), isPresented: $showResetAlert) {
-                    Button(languageManager.localizedString("cancel"), role: .cancel) {}
-                    Button(languageManager.localizedString("reset"), role: .destructive) {
-                        completionManager.resetAll()
-                        imageManager.removeAllUserImages()
-                        favoriteManager.resetAll()
-                    }
-                } message: {
-                    Text(languageManager.localizedString("progress_reset_confirm_message"))
-                }
+                .padding(24)
             }
+        }
         .navigationTitle(languageManager.localizedString("settings_title"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -73,12 +71,57 @@ struct settings: View {
                 }) {
                     Image(systemName: "questionmark.circle")
                         .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.blue)
+                        .frame(width: 30, height: 30) // サイズ調整
+                        .foregroundColor(.themeIndigo)
                 }
             }
         }
         .tutorial(flow: .settings, autoStart: true)
+    }
+}
+
+// MARK: - 設定画面用のカスタム行ビュー
+struct WashiSettingsRow: View {
+    let icon: String
+    let title: String
+    var subtitle: String? = nil
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // アイコン背景
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.1))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: icon)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(color)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.themeSumi)
+                
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray.opacity(0.5))
+                .font(.caption)
+        }
+        .padding(16)
+        .washiStyle() // 共通の和紙カードスタイルを適用
     }
 }
 

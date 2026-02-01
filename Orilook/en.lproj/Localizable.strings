@@ -191,3 +191,8 @@
 "fortune5" = "Fold the other diagonal to create a triangle, then unfold.";
 "fortune6" = "Fold all four corners to the center point.";
 "fortune7" = "Flip the paper over to complete the fortune teller.";
+
+"dog1" = "Fold the paper in half diagonally to create a triangle. ";
+"dog2" = "Fold the paper again in half diagonally to create a triangle, then unfold. ";
+"dog3" = "耳になるように三角形の頂点を折る";
+"dog4" = "2手順目で折った線に合わせて折る";

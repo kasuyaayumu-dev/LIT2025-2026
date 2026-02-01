@@ -33,10 +33,10 @@ struct USDZSceneView: UIViewRepresentable {
         scnView.allowsCameraControl = true
         
         // カメラ制御のカスタマイズ
-        // バウンディングボックスではなく原点(0,0,0)を中心に回転させる
+//         バウンディングボックスではなく原点(0,0,0)を中心に回転させる
         scnView.defaultCameraController.automaticTarget = false
         scnView.defaultCameraController.target = SCNVector3(0, 0, 0)
-        // ターンテーブルモード（Z軸回転をロックして水平回転しやすくする）
+//         ターンテーブルモード（Z軸回転をロックして水平回転しやすくする）
         scnView.defaultCameraController.interactionMode = .orbitTurntable
         // 慣性を有効化
         scnView.defaultCameraController.inertiaEnabled = true
@@ -65,6 +65,7 @@ struct USDZSceneView: UIViewRepresentable {
         setupLighting(scene: scene)
     }
     
+
     private func loadUSDZ(scene: SCNScene, fileName: String) {
         let cleanFileName = fileName.replacingOccurrences(of: ".usdz", with: "")
         
@@ -76,9 +77,32 @@ struct USDZSceneView: UIViewRepresentable {
         
         do {
             let modelScene = try SCNScene(url: modelURL)
+            
+            // モデルの内容物を一時的なラッパーノードに追加
+            let wrapperNode = SCNNode()
             for child in modelScene.rootNode.childNodes {
-                scene.rootNode.addChildNode(child)
+                wrapperNode.addChildNode(child)
             }
+            
+            // バウンディングボックスを計算して重心を求める
+            // scene.rootNodeに追加する前に計算する必要があるため、一時的にwrapperNodeを使う
+            // (注: モデルが空の場合などは考慮が必要だが、基本的にはこれでOK)
+            let (min, max) = wrapperNode.boundingBox
+            let center = SCNVector3(
+                x: (min.x + max.x) / 2,
+                y: (min.y + max.y) / 2,
+                z: (min.z + max.z) / 2
+            )
+            
+            // 重心が原点(0,0,0)に来るようにラッパーノードをずらす
+            wrapperNode.position = SCNVector3(-center.x, -center.y, -center.z)
+            
+            // さらにそのラッパーを格納する親ノード(これが(0,0,0)に配置される)を作成
+            let rootAnchor = SCNNode()
+            rootAnchor.addChildNode(wrapperNode)
+            
+            scene.rootNode.addChildNode(rootAnchor)
+            
         } catch {
             print("読み込みエラー: \(error)")
             createFallback(scene: scene)
