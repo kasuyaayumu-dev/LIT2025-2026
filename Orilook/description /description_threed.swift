@@ -159,8 +159,8 @@ struct DescriptionThreed: View { // ファイル名に合わせて struct 名を
                 }
             }
             
-            // チュートリアルボタン等が必要であれば追加
-            /*
+//             チュートリアルボタン等が必要であれば追加
+            
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: { tutorialManager.startTutorial(for: .description3d, force: true) }) {
                     Image(systemName: "questionmark.circle")
@@ -168,7 +168,17 @@ struct DescriptionThreed: View { // ファイル名に合わせて struct 名を
                         .foregroundColor(.themeIndigo)
                 }
             }
-            */
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    navigationManager.navigate(to: .settings)
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .resizable()
+                        .frame(width: 24, height: 24)
+                        .foregroundColor(.themeSumi)
+                }
+            }
         }
     }
 }

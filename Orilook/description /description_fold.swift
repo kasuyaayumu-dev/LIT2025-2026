@@ -167,6 +167,17 @@ struct description_fold: View {
                         .foregroundColor(.themeIndigo)
                 }
             }
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    navigationManager.navigate(to: .settings)
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .resizable()
+                        .frame(width: 24, height: 24)
+                        .foregroundColor(.themeSumi)
+                }
+            }
         }
         .sheet(isPresented: $showingPhotoPickerSheet) {
             PhotoPickerSheet(

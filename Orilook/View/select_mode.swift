@@ -29,7 +29,7 @@ struct select_mode: View {
                 ZStack(alignment: .bottomTrailing) {
                     CustomImageView(origamiCode: origami.code)
                         .scaledToFit()
-                        .frame(maxWidth: 280)
+                        .frame(maxWidth: 700)
                         .padding(12)
                         .background(Color.white)
                         .shadow(color: Color.black.opacity(0.15), radius: 5, x: 2, y: 4)
@@ -59,7 +59,7 @@ struct select_mode: View {
                 GeometryReader { geometry in
                     let buttonWidth = min(300, (geometry.size.width - 120) / 2)
                     let buttonHeight: CGFloat = 170
-                    let spacing: CGFloat = 30
+                    let spacing: CGFloat = 40
                     
                     VStack(spacing: spacing) {
                         // 1行目: Fold & Open
