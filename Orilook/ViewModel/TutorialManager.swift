@@ -20,12 +20,16 @@ enum TutorialPosition {
     case bottom
 }
 
-// 画面ごとのチュートリアルを定義
+// 画面ごとのチュートリアルフローを定義
 enum TutorialFlow: String, CaseIterable {
     case contentsList = "contents_list"
     case galleryView = "gallery_view"
     case selectMode = "select_mode"
     case settings = "settings"
+    // 【追加】ここが不足していたためエラーになっていました
+    case descriptionFold = "description_fold"
+    case descriptionOpen = "description_open"
+    case descriptionAR = "description_ar" // AR用も念のため追加しておきます
     
     var steps: [TutorialStep] {
         switch self {
@@ -46,7 +50,7 @@ enum TutorialFlow: String, CaseIterable {
                     position: .topRight
                 ),
                 TutorialStep(
-                    id: "settings_button", 
+                    id: "settings_button",
                     title: "tutorial_contents_settings_title",
                     message: "tutorial_contents_settings_message",
                     targetView: "settings_button",
@@ -54,7 +58,7 @@ enum TutorialFlow: String, CaseIterable {
                 ),
                 TutorialStep(
                     id: "view_mode",
-                    title: "tutorial_contents_viewmode_title", 
+                    title: "tutorial_contents_viewmode_title",
                     message: "tutorial_contents_viewmode_message",
                     targetView: "view_mode_bar",
                     position: .bottom
@@ -62,7 +66,7 @@ enum TutorialFlow: String, CaseIterable {
                 TutorialStep(
                     id: "favorites",
                     title: "tutorial_contents_favorites_title",
-                    message: "tutorial_contents_favorites_message", 
+                    message: "tutorial_contents_favorites_message",
                     targetView: "favorite_button",
                     position: .topRight
                 )
@@ -78,7 +82,7 @@ enum TutorialFlow: String, CaseIterable {
                 ),
                 TutorialStep(
                     id: "gallery_selection",
-                    title: "tutorial_gallery_selection_title", 
+                    title: "tutorial_gallery_selection_title",
                     message: "tutorial_gallery_selection_message",
                     targetView: "gallery_grid",
                     position: .topLeft
@@ -86,7 +90,7 @@ enum TutorialFlow: String, CaseIterable {
                 TutorialStep(
                     id: "gallery_favorites",
                     title: "tutorial_gallery_favorites_title",
-                    message: "tutorial_gallery_favorites_message", 
+                    message: "tutorial_gallery_favorites_message",
                     targetView: "gallery_favorite_button",
                     position: .topLeft
                 )
@@ -109,7 +113,7 @@ enum TutorialFlow: String, CaseIterable {
                 ),
                 TutorialStep(
                     id: "toolbar_buttons",
-                    title: "tutorial_select_mode_toolbar_title", 
+                    title: "tutorial_select_mode_toolbar_title",
                     message: "tutorial_select_mode_toolbar_message",
                     targetView: "toolbar_buttons",
                     position: .topRight
@@ -141,8 +145,51 @@ enum TutorialFlow: String, CaseIterable {
                 TutorialStep(
                     id: "progress_reset",
                     title: "tutorial_settings_reset_title",
-                    message: "tutorial_settings_reset_message", 
+                    message: "tutorial_settings_reset_message",
                     targetView: "progress_reset",
+                    position: .center
+                )
+            ]
+            
+        // 【追加】折り方の説明画面用チュートリアル
+        case .descriptionFold:
+            return [
+                TutorialStep(
+                    id: "fold_overview",
+                    title: "tutorial_fold_overview_title",
+                    message: "tutorial_fold_overview_message",
+                    targetView: nil,
+                    position: .center
+                ),
+                TutorialStep(
+                    id: "fold_step",
+                    title: "tutorial_fold_step_title",
+                    message: "tutorial_fold_step_message",
+                    targetView: nil,
+                    position: .center
+                )
+            ]
+            
+        // 【追加】展開図画面用チュートリアル
+        case .descriptionOpen:
+            return [
+                TutorialStep(
+                    id: "open_overview",
+                    title: "tutorial_open_overview_title",
+                    message: "tutorial_open_overview_message",
+                    targetView: nil,
+                    position: .center
+                )
+            ]
+            
+        // 【追加】AR画面用チュートリアル
+        case .descriptionAR:
+            return [
+                TutorialStep(
+                    id: "ar_overview",
+                    title: "tutorial_ar_overview_title",
+                    message: "tutorial_ar_overview_message",
+                    targetView: nil,
                     position: .center
                 )
             ]

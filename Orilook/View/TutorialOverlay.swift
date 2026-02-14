@@ -12,8 +12,13 @@ struct TutorialOverlay: View {
         switch flow {
         case .contentsList, .galleryView:
             return -28  // リストとギャラリーは28ポイント上
+            
         case .selectMode, .settings:
             return -128  // モード選択と設定は128ポイント上
+            
+        // 【修正】新しく追加した画面のケースを追加（Switch must be exhaustive エラー対応）
+        case .descriptionFold, .descriptionOpen, .descriptionAR:
+            return -128  // 説明画面系も同様に調整
         }
     }
     
